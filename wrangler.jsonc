@@ -4,7 +4,7 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "gemini-balance-do",
+	"name": "gemini-cn",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-08-05",
 	"migrations": [
@@ -24,7 +24,7 @@
 	"observability": {
 		"enabled": true
 	},
-	"vars": { "AUTH_KEY": "ajielu" }
+	"vars": { "AUTH_KEY": "zanezone" }
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
