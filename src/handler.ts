@@ -68,7 +68,7 @@ export class LoadBalancer extends DurableObject {
 			(pathname === '/api/keys/check' && request.method === 'GET')
 		) {
 			if (!isAdminAuthenticated(request, this.env.HOME_ACCESS_KEY)) {
-				return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+				return new Response(JSON.stringify({ error: 'Unauthorized' }) , {
 					status: 401,
 					headers: fixCors({ headers: { 'Content-Type': 'application/json' } }).headers,
 				});
@@ -101,27 +101,75 @@ export class LoadBalancer extends DurableObject {
 
 		// Direct Gemini proxy
 		const authKey = this.env.AUTH_KEY;
+
+		let targetUrl = `${BASE_URL}${pathname}${search}`;
 		if (authKey) {
+		// Remove api key from query parameters if present
+		// 如果URL查询参数中包含key，则验证并移除它
+		if (search.includes('key=')) {
+			const urlObj = new URL(targetUrl);
+			const requestKey = urlObj.searchParams.get('key');
+			if (requestKey) {
+				// Check AUTH_KEY if set, before using the key from URL parameter
+				// 验证请求中的API密钥是否与环境变量中的AUTH_KEY匹配
+				if (requestKey !== authKey) {
+					return new Response('Unauthorized', { status: 401, headers: fixCors({}).headers });
+				}
+				// Remove key from URL to avoid duplication
+				// 移除URL中的key参数，避免重复
+				urlObj.searchParams.delete('key');
+				targetUrl = urlObj.toString();
+				// instead of directly returning the forwarded request
+				// 使用负载均衡方式转发请求
+				return this.forwardRequestWithLoadBalancing(targetUrl, request);
+			}
+		// Check x-goog-api-key in headers if no key in URL
+		// 如果URL中没有key参数，则检查请求头中的x-goog-api-key
+		} else {
 			const requestKey = request.headers.get('x-goog-api-key');
+			// 验证请求头中的API密钥是否与环境变量中的AUTH_KEY匹配
 			if (requestKey !== authKey) {
 				return new Response('Unauthorized', { status: 401, headers: fixCors({}).headers });
 			}
+			// 使用负载均衡方式转发请求，保持原始请求头
+			return this.forwardRequestWithLoadBalancing(targetUrl, request);
+			}
 		}
-		
-		// Remove api key from query parameters if present
-		let targetUrl = `${BASE_URL}${pathname}${search}`;
-		if (search.includes('key=')) {
-			const urlObj = new URL(targetUrl);
-			urlObj.searchParams.delete('key');
-			targetUrl = urlObj.toString();
-		}
+	}
 
+	async forwardRequest(targetUrl: string, request: Request, headers: Headers): Promise<Response> {
+		console.log(`Request Sending to Gemini: ${targetUrl}`);
+
+		const response = await fetch(targetUrl, {
+			method: request.method,
+			headers: headers,
+			body: request.body,
+		});
+
+		console.log('Call Gemini Success');
+
+		const responseHeaders = new Headers(response.headers);
+		responseHeaders.set('Access-Control-Allow-Origin', '*');
+		responseHeaders.delete('transfer-encoding');
+		responseHeaders.delete('connection');
+		responseHeaders.delete('keep-alive');
+		responseHeaders.delete('content-encoding');
+		responseHeaders.set('Referrer-Policy', 'no-referrer');
+
+		return new Response(response.body, {
+			status: response.status,
+			headers: responseHeaders,
+		});
+	}
+
+	// 对请求进行负载均衡，随机分发key
+	private async forwardRequestWithLoadBalancing(targetUrl: string, request: Request): Promise<Response> {
 		try {
-			const headers = new Headers();
 			const apiKey = await this.getRandomApiKey();
 			if (!apiKey) {
 				return new Response('No API keys configured in the load balancer.', { status: 500 });
 			}
+			let headers = new Headers();
 			headers.set('x-goog-api-key', apiKey);
 
 			// Forward content-type header
@@ -129,28 +177,7 @@ export class LoadBalancer extends DurableObject {
 				headers.set('content-type', request.headers.get('content-type')!);
 			}
 
-			console.log(`Request Sending to Gemini: ${targetUrl}`);
-
-			const response = await fetch(targetUrl, {
-				method: request.method,
-				headers: headers,
-				body: request.body,
-			});
-
-			console.log('Call Gemini Success');
-
-			const responseHeaders = new Headers(response.headers);
-			responseHeaders.set('Access-Control-Allow-Origin', '*');
-			responseHeaders.delete('transfer-encoding');
-			responseHeaders.delete('connection');
-			responseHeaders.delete('keep-alive');
-			responseHeaders.delete('content-encoding');
-			responseHeaders.set('Referrer-Policy', 'no-referrer');
-
-			return new Response(response.body, {
-				status: response.status,
-				headers: responseHeaders,
-			});
+			return this.forwardRequest(targetUrl, request, headers);
 		} catch (error) {
 			console.error('Failed to fetch:', error);
 			return new Response('Internal Server Error\n' + error, {
