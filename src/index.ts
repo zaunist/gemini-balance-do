@@ -21,7 +21,7 @@ app.get('/', (c) => {
 // 登录接口，校验 HOME_ACCESS_KEY，登录成功后写入 cookie
 app.post('/', async (c) => {
     const { key } = await c.req.json();
-    if (key === c.env.HOME_ACCESS_KEY) {
+    if (key === String(c.env.HOME_ACCESS_KEY)) {
         setCookie(c, 'auth-key', key, { maxAge: 60 * 60 * 24 * 30, path: '/' });
         return c.json({ success: true });
     }
@@ -39,9 +39,7 @@ app.get('/favicon.ico', async (c) => {
 app.all('*', async (c) => {
     const id: DurableObjectId = c.env.LOAD_BALANCER.idFromName('loadbalancer');
     const stub = c.env.LOAD_BALANCER.get(id, { locationHint: 'wnam' });
-    const newRequest = new Request(c.req.raw);
-    newRequest.headers.set('Cookie', c.req.header('Cookie'));
-    const resp = await stub.fetch(newRequest);
+    const resp = await stub.fetch(c.req.raw);
     return new Response(resp.body, {
         status: resp.status,
         headers: resp.headers,
