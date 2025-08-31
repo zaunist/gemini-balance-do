@@ -5,6 +5,7 @@
 	"private": true,
 	"scripts": {
 		"build": "esbuild src/index.ts --bundle --sourcemap --outfile=dist/_worker.js --format=esm --platform=browser --jsx=automatic --jsx-import-source=hono/jsx --external:cloudflare:* --external:workerd:*",
+		"build:pages": "echo \"Running install...\"",
 		"pages:deploy": "pnpm run build && wrangler pages deploy dist",
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
