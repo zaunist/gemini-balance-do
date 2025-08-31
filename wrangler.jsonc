@@ -6,9 +6,9 @@
 	"durable_objects": {
 		"bindings": [
 			{
-				"class_name": "LoadBalancer",
 				"name": "LOAD_BALANCER",
-				"script_name": "gemini-balance-do"
+				"class_name": "LoadBalancer",
+				"script_name": "gemini-balance-do-worker"
 			}
 		]
 	},

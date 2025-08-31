@@ -1,5 +1,42 @@
-import { DurableObject } from 'cloudflare:workers';
-import { isAdminAuthenticated } from './auth';
+/// <reference types="@cloudflare/workers-types" />
+
+// All Durable Object logic is now in this single file.
+
+interface Env {
+	LOAD_BALANCER: DurableObjectNamespace;
+	AUTH_KEY: string;
+	HOME_ACCESS_KEY: string;
+}
+
+interface ApiKey {
+    api_key: string;
+}
+
+// =================================================================================================
+// Constants
+// =================================================================================================
+const BASE_URL = 'https://generativelanguage.googleapis.com';
+const API_VERSION = 'v1beta';
+const API_CLIENT = 'genai-js/0.21.0';
+const DEFAULT_EMBEDDINGS_MODEL = 'text-embedding-004';
+const DEFAULT_COMPLETIONS_MODEL = 'gemini-1.5-flash';
+
+
+import { getAuthKey } from './auth';
+
+// =================================================================================================
+// Authentication Logic
+// =================================================================================================
+
+function isAdminAuthenticated(request: Request, homeAccessKey: string): boolean {
+    if (!homeAccessKey) return false;
+    const key = getAuthKey(request);
+    return key === homeAccessKey;
+}
+
+// =================================================================================================
+// Durable Object Implementation
+// =================================================================================================
 
 class HttpError extends Error {
 	status: number;
@@ -16,40 +53,19 @@ const fixCors = ({ headers, status, statusText }: { headers?: HeadersInit; statu
 	return { headers: newHeaders, status, statusText };
 };
 
-const handleOPTIONS = async () => {
-	return new Response(null, {
-		headers: {
-			'Access-Control-Allow-Origin': '*',
-			'Access-Control-Allow-Methods': '*',
-			'Access-Control-Allow-Headers': '*',
-		},
-	});
-};
-
-const BASE_URL = 'https://generativelanguage.googleapis.com';
-const API_VERSION = 'v1beta';
-const API_CLIENT = 'genai-js/0.21.0';
-
 const makeHeaders = (apiKey: string, more?: Record<string, string>) => ({
 	'x-goog-api-client': API_CLIENT,
 	...(apiKey && { 'x-goog-api-key': apiKey }),
 	...more,
 });
 
-/** A Durable Object's behavior is defined in an exported Javascript class */
-export class LoadBalancer extends DurableObject {
-	env: Env;
-	/**
-	 * The constructor is invoked once upon creation of the Durable Object, i.e. the first call to
-	 * 	`DurableObjectStub::get` for a given identifier (no-op constructors can be omitted)
-	 *
-	 * @param ctx - The interface for interacting with Durable Object state
-	 * @param env - The interface to reference bindings declared in wrangler.jsonc
-	 */
+export class LoadBalancer implements DurableObject {
+    ctx: DurableObjectState;
+    env: Env;
+
 	constructor(ctx: DurableObjectState, env: Env) {
-		super(ctx, env);
+		this.ctx = ctx;
 		this.env = env;
-		// Initialize the database schema upon first creation.
 		this.ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS api_keys (api_key TEXT PRIMARY KEY)');
 	}
 
@@ -57,12 +73,10 @@ export class LoadBalancer extends DurableObject {
 		const url = new URL(request.url);
 		const pathname = url.pathname;
 
-		// 静态资源直接放行
 		if (pathname === '/favicon.ico' || pathname === '/robots.txt') {
 			return new Response('', { status: 204 });
 		}
 
-		// 管理 API 权限校验（使用 HOME_ACCESS_KEY）
 		if (
 			(pathname === '/api/keys' && ['POST', 'GET', 'DELETE'].includes(request.method)) ||
 			(pathname === '/api/keys/check' && request.method === 'GET')
@@ -89,7 +103,6 @@ export class LoadBalancer extends DurableObject {
 
 		const search = url.search;
 
-		// OpenAI compatible routes
 		if (
 			pathname.endsWith('/chat/completions') ||
 			pathname.endsWith('/completions') ||
@@ -99,42 +112,31 @@ export class LoadBalancer extends DurableObject {
 			return this.handleOpenAI(request);
 		}
 
-		// Direct Gemini proxy
 		const authKey = this.env.AUTH_KEY;
 
 		let targetUrl = `${BASE_URL}${pathname}${search}`;
 		if (authKey) {
-		// Remove api key from query parameters if present
-		// 如果URL查询参数中包含key，则验证并移除它
-		if (search.includes('key=')) {
-			const urlObj = new URL(targetUrl);
-			const requestKey = urlObj.searchParams.get('key');
-			if (requestKey) {
-				// Check AUTH_KEY if set, before using the key from URL parameter
-				// 验证请求中的API密钥是否与环境变量中的AUTH_KEY匹配
-				if (requestKey !== authKey) {
-					return new Response('Unauthorized', { status: 401, headers: fixCors({}).headers });
-				}
-				// Remove key from URL to avoid duplication
-				// 移除URL中的key参数，避免重复
-				urlObj.searchParams.delete('key');
-				targetUrl = urlObj.toString();
-				// instead of directly returning the forwarded request
-				// 使用负载均衡方式转发请求
-				return this.forwardRequestWithLoadBalancing(targetUrl, request);
-			}
-		// Check x-goog-api-key in headers if no key in URL
-		// 如果URL中没有key参数，则检查请求头中的x-goog-api-key
-		} else {
-			const requestKey = request.headers.get('x-goog-api-key');
-			// 验证请求头中的API密钥是否与环境变量中的AUTH_KEY匹配
-			if (requestKey !== authKey) {
-				return new Response('Unauthorized', { status: 401, headers: fixCors({}).headers });
-			}
-			// 使用负载均衡方式转发请求，保持原始请求头
-			return this.forwardRequestWithLoadBalancing(targetUrl, request);
-			}
-		}
+            if (search.includes('key=')) {
+                const urlObj = new URL(targetUrl);
+                const requestKey = urlObj.searchParams.get('key');
+                if (requestKey) {
+                    if (requestKey !== authKey) {
+                        return new Response('Unauthorized', { status: 401, headers: fixCors({}).headers });
+                    }
+                    urlObj.searchParams.delete('key');
+                    targetUrl = urlObj.toString();
+                    return this.forwardRequestWithLoadBalancing(targetUrl, request);
+                }
+            } else {
+                const requestKey = request.headers.get('x-goog-api-key');
+                if (requestKey !== authKey) {
+                    return new Response('Unauthorized', { status: 401, headers: fixCors({}).headers });
+                }
+                return this.forwardRequestWithLoadBalancing(targetUrl, request);
+            }
+        }
+        
+		return new Response('Request not handled by any route', { status: 404 });
 	}
 
 	async forwardRequest(targetUrl: string, request: Request, headers: Headers): Promise<Response> {
@@ -162,7 +164,6 @@ export class LoadBalancer extends DurableObject {
 		});
 	}
 
-	// 对请求进行负载均衡，随机分发key
 	private async forwardRequestWithLoadBalancing(targetUrl: string, request: Request): Promise<Response> {
 		try {
 			const apiKey = await this.getRandomApiKey();
@@ -172,7 +173,6 @@ export class LoadBalancer extends DurableObject {
 			let headers = new Headers();
 			headers.set('x-goog-api-key', apiKey);
 
-			// Forward content-type header
 			if (request.headers.has('content-type')) {
 				headers.set('content-type', request.headers.get('content-type')!);
 			}
@@ -180,7 +180,7 @@ export class LoadBalancer extends DurableObject {
 			return this.forwardRequest(targetUrl, request, headers);
 		} catch (error) {
 			console.error('Failed to fetch:', error);
-			return new Response('Internal Server Error\n' + error, {
+			return new Response('Internal Server Error\n' + String(error), {
 				status: 500,
 				headers: { 'Content-Type': 'text/plain' },
 			});
@@ -213,8 +213,6 @@ export class LoadBalancer extends DurableObject {
 	}
 
 	async handleEmbeddings(req: any, apiKey: string) {
-		const DEFAULT_EMBEDDINGS_MODEL = 'text-embedding-004';
-
 		if (typeof req.model !== 'string') {
 			throw new HttpError('model is not specified', 400);
 		}
@@ -239,7 +237,7 @@ export class LoadBalancer extends DurableObject {
 			body: JSON.stringify({
 				requests: req.input.map((text: string) => ({
 					model,
-					content: { parts: { text } },
+					content: { parts: [{ text }] },
 					outputDimensionality: req.dimensions,
 				})),
 			}),
@@ -266,8 +264,7 @@ export class LoadBalancer extends DurableObject {
 	}
 
 	async handleCompletions(req: any, apiKey: string) {
-		const DEFAULT_MODEL = 'gemini-2.5-flash';
-		let model = DEFAULT_MODEL;
+		let model = DEFAULT_COMPLETIONS_MODEL;
 
 		switch (true) {
 			case typeof req.model !== 'string':
@@ -277,7 +274,7 @@ export class LoadBalancer extends DurableObject {
 				break;
 			case req.model.startsWith('gemini-'):
 			case req.model.startsWith('gemma-'):
-			case req.model.startsWith('learnlm-'):
+			case req.model.startsWith('a-star-'):
 				model = req.model;
 		}
 
@@ -365,7 +362,6 @@ export class LoadBalancer extends DurableObject {
 		return new Response(responseBody, fixCors(response));
 	}
 
-	// 辅助方法
 	private generateId(): string {
 		const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 		const randomChar = () => characters[Math.floor(Math.random() * characters.length)];
@@ -378,7 +374,6 @@ export class LoadBalancer extends DurableObject {
 			'HARM_CATEGORY_SEXUALLY_EXPLICIT',
 			'HARM_CATEGORY_DANGEROUS_CONTENT',
 			'HARM_CATEGORY_HARASSMENT',
-			'HARM_CATEGORY_CIVIC_INTEGRITY',
 		];
 
 		const safetySettings = harmCategory.map((category) => ({
@@ -492,7 +487,6 @@ export class LoadBalancer extends DurableObject {
 					parts.push({ text: item.text });
 					break;
 				case 'image_url':
-					// 简化的图片处理
 					parts.push({ text: '[图片内容]' });
 					break;
 				default:
@@ -568,7 +562,6 @@ export class LoadBalancer extends DurableObject {
 		return JSON.stringify(obj);
 	}
 
-	// 流处理方法
 	private parseStream(this: any, chunk: string, controller: any) {
 		this.buffer += chunk;
 		const lines = this.buffer.split('\n');
@@ -627,13 +620,10 @@ export class LoadBalancer extends DurableObject {
 				if (text.startsWith(lastText)) {
 					delta = text.substring(lastText.length);
 				} else {
-					// Find the common prefix
 					let i = 0;
 					while (i < text.length && i < lastText.length && text[i] === lastText[i]) {
 						i++;
 					}
-					// Send the rest of the new text as delta.
-					// This might not be perfect for all clients, but it prevents data loss.
 					delta = text.substring(i);
 				}
 
@@ -677,10 +667,6 @@ export class LoadBalancer extends DurableObject {
 		}
 		controller.enqueue('data: [DONE]\n\n');
 	}
-	// =================================================================================================
-	// Admin API Handlers
-	// =================================================================================================
-
 	async handleApiKeys(request: Request): Promise<Response> {
 		try {
 			const { keys } = (await request.json()) as { keys: string[] };
@@ -740,8 +726,9 @@ export class LoadBalancer extends DurableObject {
 
 	async handleApiKeysCheck(): Promise<Response> {
 		try {
-			const results = await this.ctx.storage.sql.exec('SELECT api_key FROM api_keys').raw<any>();
-			const keys = Array.from(results);
+            const d1Result = await this.ctx.storage.sql.exec('SELECT api_key FROM api_keys');
+            const results = Array.from(d1Result as any) as ApiKey[];
+            const keys = results.map(row => row.api_key);
 
 			const checkResults = await Promise.all(
 				keys.map(async (key) => {
@@ -781,9 +768,10 @@ export class LoadBalancer extends DurableObject {
 
 	async getAllApiKeys(): Promise<Response> {
 		try {
-			const results = await this.ctx.storage.sql.exec('SELECT * FROM api_keys').raw<any>();
-			const keys = Array.from(results);
-			return new Response(JSON.stringify({ keys }), {
+			const d1Result = await this.ctx.storage.sql.exec('SELECT * FROM api_keys');
+            const results = Array.from(d1Result as any) as ApiKey[];
+            const keys = results.map(row => row.api_key);
+   return new Response(JSON.stringify({ keys: keys }), {
 				headers: { 'Content-Type': 'application/json' },
 			});
 		} catch (error: any) {
@@ -795,16 +783,13 @@ export class LoadBalancer extends DurableObject {
 		}
 	}
 
-	// =================================================================================================
-	// Helper Methods
-	// =================================================================================================
-
 	private async getRandomApiKey(): Promise<string | null> {
 		try {
-			const results = await this.ctx.storage.sql.exec('SELECT * FROM api_keys ORDER BY RANDOM() LIMIT 1').raw<any>();
-			const keys = Array.from(results);
-			if (keys) {
-				const key = keys[0] as any;
+			const d1Result = await this.ctx.storage.sql.exec('SELECT api_key FROM api_keys ORDER BY RANDOM() LIMIT 1');
+            const results = Array.from(d1Result as any) as ApiKey[];
+
+			if (results && results.length > 0) {
+				const key = results[0].api_key;
 				console.log(`Gemini Selected API Key: ${key}`);
 				return key;
 			}

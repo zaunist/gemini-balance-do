@@ -1,15 +1,22 @@
 import { Hono } from 'hono';
 import { Render } from '../src/render';
-import { LoadBalancer } from '../src/handler';
-import { getAuthKey } from '../src/auth';
 import { getCookie, setCookie } from 'hono/cookie';
 
 const app = new Hono<{ Bindings: Env }>();
 
 // 管理页面访问，校验 HOME_ACCESS_KEY
+const getAuthKey = (c: any, sessionKey?: string): string | undefined => {
+	if (sessionKey) return sessionKey;
+	const authHeader = c.req.header('Authorization');
+	if (authHeader) {
+		return authHeader.replace(/^Bearer\s+/, '');
+	}
+	return undefined;
+};
+
 app.get('/', (c) => {
     const sessionKey = getCookie(c, 'auth-key');
-    const authKey = getAuthKey(c.req.raw, sessionKey);
+    const authKey = getAuthKey(c, sessionKey);
     if (authKey !== c.env.HOME_ACCESS_KEY) {
         return c.html(Render({ isAuthenticated: false, showWarning: false }));
     }
@@ -47,11 +54,9 @@ app.all('*', async (c) => {
 });
 
 type Env = {
-    LOAD_BALANCER: DurableObjectNamespace<LoadBalancer>;
+    LOAD_BALANCER: DurableObjectNamespace;
     AUTH_KEY: string;
     HOME_ACCESS_KEY: string;
 };
 
 export const onRequest = app.fetch;
-
-export { LoadBalancer };
