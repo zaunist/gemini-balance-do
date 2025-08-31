@@ -6,14 +6,12 @@
 	"scripts": {
 		"build": "esbuild src/index.ts --bundle --sourcemap --outfile=public/_worker.js --format=esm --platform=browser --jsx=automatic --jsx-import-source=hono/jsx --external:cloudflare:* --external:workerd:*",
 		"build:pages": "echo \"Running install...\"",
-		"pages:deploy": "pnpm run build && wrangler pages deploy public --branch=main",
-		"worker:deploy": "wrangler deploy -c do-worker/wrangler.toml",
+		"pages:deploy": "pnpm run build && wrangler pages deploy public",
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
 		"cf-typegen": "wrangler types"
 	},
 	"devDependencies": {
-		"@cloudflare/workers-types": "^4.20240820.0",
 		"esbuild": "^0.25.9",
 		"typescript": "^5.5.2",
 		"wrangler": "^4.33.1"

@@ -39,7 +39,9 @@ app.get('/favicon.ico', async (c) => {
 app.all('*', async (c) => {
     const id: DurableObjectId = c.env.LOAD_BALANCER.idFromName('loadbalancer');
     const stub = c.env.LOAD_BALANCER.get(id, { locationHint: 'wnam' });
-    const resp = await stub.fetch(c.req.raw);
+    const newRequest = new Request(c.req.raw);
+    newRequest.headers.set('Cookie', c.req.header('Cookie'));
+    const resp = await stub.fetch(newRequest);
     return new Response(resp.body, {
         status: resp.status,
         headers: resp.headers,
