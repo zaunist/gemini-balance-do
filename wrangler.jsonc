@@ -3,12 +3,6 @@
 	"name": "gemini-balance-do",
 	"pages_build_output_dir": "public",
 	"compatibility_date": "2025-08-05",
-	"migrations": [
-		{
-			"new_sqlite_classes": ["LoadBalancer"],
-			"tag": "v1"
-		}
-	],
 	"durable_objects": {
 		"bindings": [
 			{
