@@ -35,6 +35,15 @@ app.get('/favicon.ico', async (c) => {
 
 
 
+// 处理 OPTIONS 预检请求
+app.options('*', (c) => {
+    return c.text('', 204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-goog-api-key',
+    });
+});
+
 // 其它请求转发到 Durable Object
 app.all('*', async (c) => {
     const id: DurableObjectId = c.env.LOAD_BALANCER.idFromName('loadbalancer');
