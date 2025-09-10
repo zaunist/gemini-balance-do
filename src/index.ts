@@ -13,8 +13,8 @@ app.get('/', (c) => {
     if (authKey !== c.env.HOME_ACCESS_KEY) {
         return c.html(Render({ isAuthenticated: false, showWarning: false }));
     }
-    const showWarning = c.env.HOME_ACCESS_KEY === '7b18e536c27ab304266db3220b8e000db8fbbe35d6e1fde729a1a1d47303858d'
-        || c.env.AUTH_KEY === 'ajielu';
+    const showWarning = c.env.HOME_ACCESS_KEY === 'Qazqaz123!'
+        || c.env.AUTH_KEY === 'Qazqaz123!';
     return c.html(Render({ isAuthenticated: true, showWarning }));
 });
 
