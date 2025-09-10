@@ -1,6 +1,12 @@
 import { DurableObject } from 'cloudflare:workers';
 import { isAdminAuthenticated } from './auth';
 
+interface Env {
+	LOAD_BALANCER: DurableObjectNamespace<LoadBalancer>;
+	AUTH_KEY: string;
+	HOME_ACCESS_KEY: string;
+}
+
 class HttpError extends Error {
 	status: number;
 	constructor(message: string, status: number) {
@@ -50,12 +56,51 @@ export class LoadBalancer extends DurableObject {
 		super(ctx, env);
 		this.env = env;
 		// Initialize the database schema upon first creation.
-		this.ctx.storage.sql.exec('CREATE TABLE IF NOT EXISTS api_keys (api_key TEXT PRIMARY KEY)');
+		this.ctx.storage.sql.exec(`
+			CREATE TABLE IF NOT EXISTS api_keys (
+				api_key TEXT PRIMARY KEY,
+				is_active INTEGER DEFAULT 1,
+				last_error_time INTEGER DEFAULT 0,
+				cooldown INTEGER DEFAULT 60
+			)
+		`);
+		// Migration: Add new columns to existing table
+		this.migrateSchema();
+	}
+
+	private async migrateSchema() {
+		try {
+			// Check if new columns exist, if not add them
+			await this.ctx.storage.sql.exec(`
+				ALTER TABLE api_keys ADD COLUMN is_active INTEGER DEFAULT 1
+			`);
+		} catch (e) {
+			// Column already exists, ignore
+		}
+		try {
+			await this.ctx.storage.sql.exec(`
+				ALTER TABLE api_keys ADD COLUMN last_error_time INTEGER DEFAULT 0
+			`);
+		} catch (e) {
+			// Column already exists, ignore
+		}
+		try {
+			await this.ctx.storage.sql.exec(`
+				ALTER TABLE api_keys ADD COLUMN cooldown INTEGER DEFAULT 60
+			`);
+		} catch (e) {
+			// Column already exists, ignore
+		}
 	}
 
 	async fetch(request: Request): Promise<Response> {
 		const url = new URL(request.url);
 		const pathname = url.pathname;
+
+		// Handle CORS preflight requests
+		if (request.method === 'OPTIONS') {
+			return handleOPTIONS();
+		}
 
 		// 静态资源直接放行
 		if (pathname === '/favicon.ico' || pathname === '/robots.txt') {
@@ -65,7 +110,8 @@ export class LoadBalancer extends DurableObject {
 		// 管理 API 权限校验（使用 HOME_ACCESS_KEY）
 		if (
 			(pathname === '/api/keys' && ['POST', 'GET', 'DELETE'].includes(request.method)) ||
-			(pathname === '/api/keys/check' && request.method === 'GET')
+			(pathname === '/api/keys/check' && request.method === 'GET') ||
+			(pathname === '/api/keys/reset' && request.method === 'POST')
 		) {
 			if (!isAdminAuthenticated(request, this.env.HOME_ACCESS_KEY)) {
 				return new Response(JSON.stringify({ error: 'Unauthorized' }) , {
@@ -84,6 +130,9 @@ export class LoadBalancer extends DurableObject {
 			}
 			if (pathname === '/api/keys/check' && request.method === 'GET') {
 				return this.handleApiKeysCheck();
+			}
+			if (pathname === '/api/keys/reset' && request.method === 'POST') {
+				return this.handleResetApiKeys(request);
 			}
 		}
 
@@ -104,86 +153,149 @@ export class LoadBalancer extends DurableObject {
 
 		let targetUrl = `${BASE_URL}${pathname}${search}`;
 		if (authKey) {
-		// Remove api key from query parameters if present
-		// 如果URL查询参数中包含key，则验证并移除它
-		if (search.includes('key=')) {
-			const urlObj = new URL(targetUrl);
-			const requestKey = urlObj.searchParams.get('key');
-			if (requestKey) {
-				// Check AUTH_KEY if set, before using the key from URL parameter
-				// 验证请求中的API密钥是否与环境变量中的AUTH_KEY匹配
+			// Remove api key from query parameters if present
+			// 如果URL查询参数中包含key，则验证并移除它
+			if (search.includes('key=')) {
+				const urlObj = new URL(targetUrl);
+				const requestKey = urlObj.searchParams.get('key');
+				if (requestKey) {
+					// Check AUTH_KEY if set, before using the key from URL parameter
+					// 验证请求中的API密钥是否与环境变量中的AUTH_KEY匹配
+					if (requestKey !== authKey) {
+						return new Response('Unauthorized', { status: 401, headers: fixCors({}).headers });
+					}
+					// Remove key from URL to avoid duplication
+					// 移除URL中的key参数，避免重复
+					urlObj.searchParams.delete('key');
+					targetUrl = urlObj.toString();
+					// instead of directly returning the forwarded request
+					// 使用负载均衡方式转发请求
+					return this.forwardRequestWithLoadBalancing(targetUrl, request);
+				} else {
+					// No key in URL parameters, continue to header check
+					const requestKey = request.headers.get('x-goog-api-key');
+					// 验证请求头中的API密钥是否与环境变量中的AUTH_KEY匹配
+					if (requestKey !== authKey) {
+						return new Response('Unauthorized', { status: 401, headers: fixCors({}).headers });
+					}
+					// 使用负载均衡方式转发请求，保持原始请求头
+					return this.forwardRequestWithLoadBalancing(targetUrl, request);
+				}
+			// Check x-goog-api-key in headers if no key in URL
+			// 如果URL中没有key参数，则检查请求头中的x-goog-api-key
+			} else {
+				const requestKey = request.headers.get('x-goog-api-key');
+				// 验证请求头中的API密钥是否与环境变量中的AUTH_KEY匹配
 				if (requestKey !== authKey) {
 					return new Response('Unauthorized', { status: 401, headers: fixCors({}).headers });
 				}
-				// Remove key from URL to avoid duplication
-				// 移除URL中的key参数，避免重复
-				urlObj.searchParams.delete('key');
-				targetUrl = urlObj.toString();
-				// instead of directly returning the forwarded request
-				// 使用负载均衡方式转发请求
+				// 使用负载均衡方式转发请求，保持原始请求头
 				return this.forwardRequestWithLoadBalancing(targetUrl, request);
 			}
-		// Check x-goog-api-key in headers if no key in URL
-		// 如果URL中没有key参数，则检查请求头中的x-goog-api-key
 		} else {
-			const requestKey = request.headers.get('x-goog-api-key');
-			// 验证请求头中的API密钥是否与环境变量中的AUTH_KEY匹配
-			if (requestKey !== authKey) {
-				return new Response('Unauthorized', { status: 401, headers: fixCors({}).headers });
-			}
-			// 使用负载均衡方式转发请求，保持原始请求头
+			// No AUTH_KEY set, use load balancing directly
 			return this.forwardRequestWithLoadBalancing(targetUrl, request);
-			}
 		}
 	}
 
-	async forwardRequest(targetUrl: string, request: Request, headers: Headers): Promise<Response> {
-		console.log(`Request Sending to Gemini: ${targetUrl}`);
 
-		const response = await fetch(targetUrl, {
-			method: request.method,
-			headers: headers,
-			body: request.body,
-		});
+	// 对请求进行负载均衡，智能分发key并处理错误重试
+	private async forwardRequestWithLoadBalancing(targetUrl: string, request: Request): Promise<Response> {
+		const maxRetries = 3; // 最大重试次数
+		let retryCount = 0;
 
-		console.log('Call Gemini Success');
+		while (retryCount < maxRetries) {
+			try {
+				const apiKey = await this.selectAvailableKey();
+				if (!apiKey) {
+					console.log(`No available API keys found on retry ${retryCount + 1}`);
+					if (retryCount === maxRetries - 1) {
+						return new Response('No available API keys. All keys may be in cooldown.', { 
+							status: 503,
+							headers: fixCors({}).headers
+						});
+					}
+					retryCount++;
+					// 短暂延迟后重试
+					await new Promise(resolve => setTimeout(resolve, 1000));
+					continue;
+				}
 
-		const responseHeaders = new Headers(response.headers);
-		responseHeaders.set('Access-Control-Allow-Origin', '*');
-		responseHeaders.delete('transfer-encoding');
-		responseHeaders.delete('connection');
-		responseHeaders.delete('keep-alive');
-		responseHeaders.delete('content-encoding');
-		responseHeaders.set('Referrer-Policy', 'no-referrer');
+				let headers = new Headers();
+				headers.set('x-goog-api-key', apiKey);
 
-		return new Response(response.body, {
-			status: response.status,
-			headers: responseHeaders,
+				// Forward content-type header
+				if (request.headers.has('content-type')) {
+					headers.set('content-type', request.headers.get('content-type')!);
+				}
+
+				const response = await this.forwardRequestWithErrorHandling(targetUrl, request, headers, apiKey);
+				
+				// 如果响应成功，返回结果
+				if (response.ok || response.status < 500) {
+					return response;
+				}
+				
+				// 5xx 错误，标记 key 失败并重试
+				await this.markKeyAsFailed(apiKey, response.status);
+				retryCount++;
+
+			} catch (error) {
+				console.error(`Request failed on retry ${retryCount + 1}:`, error);
+				retryCount++;
+				if (retryCount === maxRetries) {
+					return new Response('Internal Server Error after multiple retries\n' + error, {
+						status: 500,
+						headers: fixCors({ headers: { 'Content-Type': 'text/plain' } }).headers,
+					});
+				}
+			}
+		}
+
+		return new Response('Max retries exceeded', { 
+			status: 500,
+			headers: fixCors({}).headers
 		});
 	}
 
-	// 对请求进行负载均衡，随机分发key
-	private async forwardRequestWithLoadBalancing(targetUrl: string, request: Request): Promise<Response> {
+	private async forwardRequestWithErrorHandling(targetUrl: string, request: Request, headers: Headers, apiKey: string): Promise<Response> {
 		try {
-			const apiKey = await this.getRandomApiKey();
-			if (!apiKey) {
-				return new Response('No API keys configured in the load balancer.', { status: 500 });
-			}
-			let headers = new Headers();
-			headers.set('x-goog-api-key', apiKey);
+			console.log(`Request Sending to Gemini with key: ${apiKey}, URL: ${targetUrl}`);
 
-			// Forward content-type header
-			if (request.headers.has('content-type')) {
-				headers.set('content-type', request.headers.get('content-type')!);
-			}
-
-			return this.forwardRequest(targetUrl, request, headers);
-		} catch (error) {
-			console.error('Failed to fetch:', error);
-			return new Response('Internal Server Error\n' + error, {
-				status: 500,
-				headers: { 'Content-Type': 'text/plain' },
+			const response = await fetch(targetUrl, {
+				method: request.method,
+				headers: headers,
+				body: request.body,
 			});
+
+			console.log(`Gemini Response: ${response.status} ${response.statusText}`);
+
+			// 检查响应状态并标记失败的 key
+			if (!response.ok) {
+				console.log(`API Key failed with status ${response.status}: ${apiKey}`);
+				await this.markKeyAsFailed(apiKey, response.status);
+			} else {
+				console.log('Call Gemini Success');
+			}
+
+			const responseHeaders = new Headers(response.headers);
+			responseHeaders.set('Access-Control-Allow-Origin', '*');
+			responseHeaders.delete('transfer-encoding');
+			responseHeaders.delete('connection');
+			responseHeaders.delete('keep-alive');
+			responseHeaders.delete('content-encoding');
+			responseHeaders.set('Referrer-Policy', 'no-referrer');
+
+			return new Response(response.body, {
+				status: response.status,
+				headers: responseHeaders,
+			});
+
+		} catch (error) {
+			console.error('Network error:', error);
+			// 网络错误也标记 key 失败
+			await this.markKeyAsFailed(apiKey, 500);
+			throw error;
 		}
 	}
 
@@ -781,16 +893,57 @@ export class LoadBalancer extends DurableObject {
 
 	async getAllApiKeys(): Promise<Response> {
 		try {
-			const results = await this.ctx.storage.sql.exec('SELECT * FROM api_keys').raw<any>();
-			const keys = Array.from(results);
+			const results = await this.ctx.storage.sql.exec(`
+				SELECT api_key, is_active, last_error_time, cooldown 
+				FROM api_keys
+			`).raw<any>();
+			const keys = Array.from(results).map((row: any) => {
+				const now = Math.floor(Date.now() / 1000);
+				const isInCooldown = row.is_active && (now - row.last_error_time <= row.cooldown);
+				return {
+					api_key: row.api_key,
+					is_active: Boolean(row.is_active),
+					last_error_time: row.last_error_time,
+					cooldown: row.cooldown,
+					status: !row.is_active ? 'disabled' : isInCooldown ? 'cooldown' : 'active'
+				};
+			});
 			return new Response(JSON.stringify({ keys }), {
-				headers: { 'Content-Type': 'application/json' },
+				headers: fixCors({ headers: { 'Content-Type': 'application/json' } }).headers,
 			});
 		} catch (error: any) {
 			console.error('获取API密钥失败:', error);
 			return new Response(JSON.stringify({ error: error.message || '内部服务器错误' }), {
 				status: 500,
-				headers: { 'Content-Type': 'application/json' },
+				headers: fixCors({ headers: { 'Content-Type': 'application/json' } }).headers,
+			});
+		}
+	}
+
+	async handleResetApiKeys(request: Request): Promise<Response> {
+		try {
+			const { keys } = (await request.json()) as { keys: string[] };
+			if (!Array.isArray(keys) || keys.length === 0) {
+				return new Response(JSON.stringify({ error: '请求体无效，需要一个包含key的非空数组。' }), {
+					status: 400,
+					headers: fixCors({ headers: { 'Content-Type': 'application/json' } }).headers,
+				});
+			}
+
+			// 重置指定 key 的状态
+			for (const key of keys) {
+				await this.resetKeyStatus(key);
+			}
+
+			return new Response(JSON.stringify({ message: `成功重置 ${keys.length} 个API密钥的状态。` }), {
+				status: 200,
+				headers: fixCors({ headers: { 'Content-Type': 'application/json' } }).headers,
+			});
+		} catch (error: any) {
+			console.error('重置API密钥状态失败:', error);
+			return new Response(JSON.stringify({ error: error.message || '内部服务器错误' }), {
+				status: 500,
+				headers: fixCors({ headers: { 'Content-Type': 'application/json' } }).headers,
 			});
 		}
 	}
@@ -800,18 +953,88 @@ export class LoadBalancer extends DurableObject {
 	// =================================================================================================
 
 	private async getRandomApiKey(): Promise<string | null> {
+		return this.selectAvailableKey();
+	}
+
+	private async selectAvailableKey(): Promise<string | null> {
 		try {
-			const results = await this.ctx.storage.sql.exec('SELECT * FROM api_keys ORDER BY RANDOM() LIMIT 1').raw<any>();
+			const now = Math.floor(Date.now() / 1000); // 当前时间戳（秒）
+			
+			// 查询所有活跃且不在冷却期的 key
+			const results = await this.ctx.storage.sql.exec(`
+				SELECT api_key FROM api_keys 
+				WHERE is_active = 1 
+				AND (${now} - last_error_time > cooldown)
+				ORDER BY RANDOM() 
+				LIMIT 1
+			`).raw<any>();
+			
 			const keys = Array.from(results);
-			if (keys) {
-				const key = keys[0] as any;
-				console.log(`Gemini Selected API Key: ${key}`);
-				return key;
+			if (keys && keys.length > 0) {
+				const selectedKey = keys[0] as string;
+				console.log(`Gemini Selected Available API Key: ${selectedKey}`);
+				return selectedKey;
 			}
+			
+			console.log('No available API keys found');
 			return null;
 		} catch (error) {
-			console.error('获取随机API密钥失败:', error);
+			console.error('获取可用API密钥失败:', error);
 			return null;
+		}
+	}
+
+	private async markKeyAsFailed(apiKey: string, errorCode: number): Promise<void> {
+		try {
+			const now = Math.floor(Date.now() / 1000);
+			let cooldown = 60; // 默认 1 分钟
+			let isActive = 1; // 默认保持活跃状态
+
+			// 根据错误码设置不同的冷却策略
+			switch (errorCode) {
+				case 429: // 速率限制
+					cooldown = 300; // 5 分钟
+					break;
+				case 401: // 未授权
+				case 403: // 禁止访问
+					cooldown = 0; // 永久禁用
+					isActive = 0;
+					console.log(`API Key marked as permanently disabled due to auth error: ${apiKey}`);
+					break;
+				case 400: // 请求错误
+					cooldown = 120; // 2 分钟
+					break;
+				case 500:
+				case 502:
+				case 503: // 服务器错误
+					cooldown = 180; // 3 分钟
+					break;
+				default:
+					cooldown = 60; // 1 分钟
+			}
+
+			await this.ctx.storage.sql.exec(`
+				UPDATE api_keys 
+				SET is_active = ?, last_error_time = ?, cooldown = ?
+				WHERE api_key = ?
+			`, isActive, now, cooldown, apiKey);
+
+			console.log(`API Key marked as failed. Key: ${apiKey}, Error: ${errorCode}, Cooldown: ${cooldown}s, Active: ${isActive}`);
+		} catch (error) {
+			console.error('标记API密钥失败:', error);
+		}
+	}
+
+	private async resetKeyStatus(apiKey: string): Promise<void> {
+		try {
+			await this.ctx.storage.sql.exec(`
+				UPDATE api_keys 
+				SET is_active = 1, last_error_time = 0, cooldown = 60
+				WHERE api_key = ?
+			`, apiKey);
+			console.log(`API Key status reset: ${apiKey}`);
+		} catch (error) {
+			console.error('重置API密钥状态失败:', error);
 		}
 	}
 

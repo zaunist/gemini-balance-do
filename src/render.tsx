@@ -108,6 +108,9 @@ export const Render = ({ isAuthenticated, showWarning }: { isAuthenticated: bool
 										<button id="check-keys-btn" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition mr-2">
 											一键检查
 										</button>
+										<button id="reset-keys-btn" class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition mr-2 hidden">
+											重置选中
+										</button>
 										<button id="refresh-keys-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">
 											刷新
 										</button>
@@ -121,7 +124,8 @@ export const Render = ({ isAuthenticated, showWarning }: { isAuthenticated: bool
 													<input type="checkbox" id="select-all-keys" />
 												</th>
 												<th class="p-2">API 密钥</th>
-												<th class="p-2">状态</th>
+												<th class="p-2">运行状态</th>
+												<th class="p-2">验证状态</th>
 											</tr>
 										</thead>
 										<tbody></tbody>
@@ -149,41 +153,58 @@ export const Render = ({ isAuthenticated, showWarning }: { isAuthenticated: bool
 										const selectAllCheckbox = document.getElementById('select-all-keys');
 										const deleteSelectedBtn = document.getElementById('delete-selected-keys-btn');
 										const checkKeysBtn = document.getElementById('check-keys-btn');
+										const resetKeysBtn = document.getElementById('reset-keys-btn');
+
+										const getStatusDisplay = (status) => {
+											switch (status) {
+												case 'active':
+													return '<span class="text-green-500 font-medium">活跃</span>';
+												case 'cooldown':
+													return '<span class="text-yellow-500 font-medium">冷却中</span>';
+												case 'disabled':
+													return '<span class="text-red-500 font-medium">已禁用</span>';
+												default:
+													return '<span class="text-gray-500">未知</span>';
+											}
+										};
 
 										const fetchAndRenderKeys = async () => {
-												keysTableBody.innerHTML = '<tr><td colspan="3" class="p-2 text-center">加载中...</td></tr>';
+												keysTableBody.innerHTML = '<tr><td colspan="4" class="p-2 text-center">加载中...</td></tr>';
 												try {
 												  const response = await fetch('/api/keys');
 												  const { keys } = await response.json();
 												  keysTableBody.innerHTML = '';
 												  if (keys.length === 0) {
-												    keysTableBody.innerHTML = '<tr><td colspan="3" class="p-2 text-center">暂无密钥</td></tr>';
+												    keysTableBody.innerHTML = '<tr><td colspan="4" class="p-2 text-center">暂无密钥</td></tr>';
 												  } else {
-												    keys.forEach(key => {
+												    keys.forEach(keyData => {
 												      const row = document.createElement('tr');
-															row.dataset.key = key;
+															row.dataset.key = keyData.api_key;
 												      row.innerHTML = \`
-												        <td class="p-2 w-6"><input type="checkbox" class="key-checkbox" data-key="\${key}" /></td>
-												        <td class="p-2 font-mono">\${key}</td>
-												        <td class="p-2 status-cell">未知</td>
+												        <td class="p-2 w-6"><input type="checkbox" class="key-checkbox" data-key="\${keyData.api_key}" /></td>
+												        <td class="p-2 font-mono">\${keyData.api_key}</td>
+												        <td class="p-2 runtime-status-cell">\${getStatusDisplay(keyData.status)}</td>
+												        <td class="p-2 validation-status-cell">未检查</td>
 												      \`;
 												      keysTableBody.appendChild(row);
 												    });
 												  }
 												} catch (error) {
-												  keysTableBody.innerHTML = '<tr><td colspan="3" class="p-2 text-center text-red-500">加载失败</td></tr>';
+												  keysTableBody.innerHTML = '<tr><td colspan="4" class="p-2 text-center text-red-500">加载失败</td></tr>';
 												  console.error('Failed to fetch keys:', error);
 												}
 										};
 
-										const updateDeleteButtonVisibility = () => {
+										const updateButtonVisibility = () => {
 												const selectedKeys = document.querySelectorAll('.key-checkbox:checked');
-												deleteSelectedBtn.classList.toggle('hidden', selectedKeys.length === 0);
+												const hasSelection = selectedKeys.length > 0;
+												deleteSelectedBtn.classList.toggle('hidden', !hasSelection);
+												resetKeysBtn.classList.toggle('hidden', !hasSelection);
 										};
 
 										keysTableBody.addEventListener('change', (e) => {
 												if (e.target.classList.contains('key-checkbox')) {
-												  updateDeleteButtonVisibility();
+												  updateButtonVisibility();
 												}
 										});
 
@@ -192,7 +213,7 @@ export const Render = ({ isAuthenticated, showWarning }: { isAuthenticated: bool
 												checkboxes.forEach(checkbox => {
 												  checkbox.checked = selectAllCheckbox.checked;
 												});
-												updateDeleteButtonVisibility();
+												updateButtonVisibility();
 										});
 
 										deleteSelectedBtn.addEventListener('click', async () => {
@@ -216,7 +237,7 @@ export const Render = ({ isAuthenticated, showWarning }: { isAuthenticated: bool
 												  if (response.ok) {
 												    alert(result.message || '密钥删除成功。');
 												    fetchAndRenderKeys();
-												    updateDeleteButtonVisibility();
+												    updateButtonVisibility();
 												    selectAllCheckbox.checked = false;
 												  } else {
 												    alert(\`删除密钥失败: \${result.error || '未知错误'}\`);
@@ -227,13 +248,45 @@ export const Render = ({ isAuthenticated, showWarning }: { isAuthenticated: bool
 												}
 										});
 
+										resetKeysBtn.addEventListener('click', async () => {
+											const selectedKeys = Array.from(document.querySelectorAll('.key-checkbox:checked')).map(cb => cb.dataset.key);
+											if (selectedKeys.length === 0) {
+												alert('请至少选择一个密钥。');
+												return;
+											}
+
+											if (!confirm(\`确定要重置选中的 \${selectedKeys.length} 个密钥的状态吗？\`)) {
+												return;
+											}
+
+											try {
+												const response = await fetch('/api/keys/reset', {
+													method: 'POST',
+													headers: { 'Content-Type': 'application/json' },
+													body: JSON.stringify({ keys: selectedKeys }),
+												});
+												const result = await response.json();
+												if (response.ok) {
+													alert(result.message || '密钥状态重置成功。');
+													fetchAndRenderKeys();
+													updateButtonVisibility();
+													selectAllCheckbox.checked = false;
+												} else {
+													alert(\`重置密钥状态失败: \${result.error || '未知错误'}\`);
+												}
+											} catch (error) {
+												alert('请求失败，请检查网络连接。');
+												console.error('Failed to reset keys:', error);
+											}
+										});
+
 										checkKeysBtn.addEventListener('click', async () => {
 											const rows = keysTableBody.querySelectorAll('tr');
 											rows.forEach(row => {
-												const statusCell = row.querySelector('.status-cell');
-												if (statusCell) {
-													statusCell.textContent = '检查中...';
-													statusCell.className = 'p-2 status-cell text-gray-500';
+												const validationStatusCell = row.querySelector('.validation-status-cell');
+												if (validationStatusCell) {
+													validationStatusCell.textContent = '检查中...';
+													validationStatusCell.className = 'p-2 validation-status-cell text-gray-500';
 												}
 											});
 
@@ -243,13 +296,16 @@ export const Render = ({ isAuthenticated, showWarning }: { isAuthenticated: bool
 												results.forEach(result => {
 													const row = keysTableBody.querySelector(\`tr[data-key="\${result.key}"]\`);
 													if (row) {
-														const statusCell = row.querySelector('.status-cell');
-														if (statusCell) {
-															statusCell.textContent = result.valid ? '有效' : '无效';
-															statusCell.className = result.valid ? 'p-2 status-cell text-green-500' : 'p-2 status-cell text-red-500';
+														const validationStatusCell = row.querySelector('.validation-status-cell');
+														if (validationStatusCell) {
+															validationStatusCell.innerHTML = result.valid ? 
+																'<span class="text-green-500 font-medium">有效</span>' : 
+																'<span class="text-red-500 font-medium">无效</span>';
 														}
 													}
 												});
+												// 检查完成后刷新运行状态
+												setTimeout(fetchAndRenderKeys, 1000);
 											} catch (error) {
 												alert('检查密钥失败，请查看控制台获取更多信息。');
 												console.error('Failed to check keys:', error);
