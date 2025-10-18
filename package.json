@@ -9,7 +9,7 @@
 		"pages:deploy": "pnpm run build && wrangler pages deploy public --branch=main",
 		"worker:deploy": "wrangler deploy -c do-worker/wrangler.toml",
 		"deploy": "wrangler deploy",
-		"dev": "wrangler dev",
+		"dev": "wrangler pages dev public",
 		"start": "wrangler dev",
 		"cf-typegen": "wrangler types"
 	},

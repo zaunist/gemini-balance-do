@@ -2150,57 +2150,116 @@ var Render = ({ isAuthenticated, showWarning }) => {
       /* @__PURE__ */ jsxDEV("title", { children: "Gemini API \u5BC6\u94A5\u7BA1\u7406" }),
       /* @__PURE__ */ jsxDEV("script", { src: "https://cdn.tailwindcss.com" })
     ] }),
-    /* @__PURE__ */ jsxDEV("body", { class: "bg-gray-100", children: [
+    /* @__PURE__ */ jsxDEV("body", { class: "bg-slate-100 text-slate-800", children: [
       showWarning && /* @__PURE__ */ jsxDEV("div", { class: "bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3 mb-4", role: "alert", children: [
         /* @__PURE__ */ jsxDEV("strong", { class: "font-bold", children: "\u5B89\u5168\u8B66\u544A\uFF1A" }),
         /* @__PURE__ */ jsxDEV("span", { class: "block", children: "\u5F53\u524D HOME_ACCESS_KEY \u6216 AUTH_KEY \u4E3A\u9ED8\u8BA4\u503C\uFF0C\u8BF7\u5C3D\u5FEB\u4FEE\u6539\u73AF\u5883\u53D8\u91CF\u5E76\u91CD\u65B0\u90E8\u7F72 Worker\uFF01" })
       ] }),
       /* @__PURE__ */ jsxDEV("div", { class: "flex h-screen", children: [
-        /* @__PURE__ */ jsxDEV("div", { class: "w-64 bg-gray-800 text-white p-4", children: [
-          /* @__PURE__ */ jsxDEV("h1", { class: "text-2xl font-bold mb-8", children: "\u7BA1\u7406\u9762\u677F" }),
-          /* @__PURE__ */ jsxDEV("nav", { children: /* @__PURE__ */ jsxDEV("a", { href: "#", class: "block py-2 px-4 rounded bg-gray-700", children: "\u5BC6\u94A5\u7BA1\u7406" }) })
+        /* @__PURE__ */ jsxDEV("div", { class: "w-64 bg-slate-800 text-white p-4 flex flex-col", children: [
+          /* @__PURE__ */ jsxDEV("h1", { class: "text-2xl font-bold mb-8 text-sky-400", children: "\u7BA1\u7406\u9762\u677F" }),
+          /* @__PURE__ */ jsxDEV("nav", { class: "flex flex-col space-y-2", children: [
+            /* @__PURE__ */ jsxDEV("a", { href: "#", id: "nav-keys-list", class: "block py-2.5 px-4 rounded-lg bg-slate-700 transition-colors", children: "\u5BC6\u94A5\u5217\u8868" }),
+            /* @__PURE__ */ jsxDEV("a", { href: "#", id: "nav-add-keys", class: "block py-2.5 px-4 rounded-lg hover:bg-slate-700 transition-colors", children: "\u6DFB\u52A0\u5BC6\u94A5" })
+          ] })
         ] }),
-        /* @__PURE__ */ jsxDEV("div", { class: "flex-1 p-8", children: [
-          /* @__PURE__ */ jsxDEV("h2", { class: "text-3xl font-bold mb-6", children: "Gemini API \u5BC6\u94A5\u7BA1\u7406" }),
-          /* @__PURE__ */ jsxDEV("div", { class: "grid grid-cols-1 md:grid-cols-2 gap-8", children: [
-            /* @__PURE__ */ jsxDEV("div", { class: "bg-white p-6 rounded-lg shadow-md", children: [
-              /* @__PURE__ */ jsxDEV("h3", { class: "text-xl font-semibold mb-4", children: "\u6279\u91CF\u6DFB\u52A0\u5BC6\u94A5" }),
+        /* @__PURE__ */ jsxDEV("div", { class: "flex-1 p-8 overflow-y-auto", children: [
+          /* @__PURE__ */ jsxDEV("div", { id: "page-keys-list", children: [
+            /* @__PURE__ */ jsxDEV("h2", { class: "text-3xl font-bold mb-6 text-slate-700", children: "\u5BC6\u94A5\u5217\u8868" }),
+            /* @__PURE__ */ jsxDEV("div", { class: "bg-white p-6 rounded-lg shadow-sm", children: [
+              /* @__PURE__ */ jsxDEV("div", { class: "flex justify-between items-center mb-4", children: [
+                /* @__PURE__ */ jsxDEV("h3", { class: "text-xl font-semibold text-slate-600", children: "\u5DF2\u5B58\u50A8\u7684\u5BC6\u94A5" }),
+                /* @__PURE__ */ jsxDEV("div", { class: "space-x-2", children: [
+                  /* @__PURE__ */ jsxDEV(
+                    "button",
+                    {
+                      id: "check-keys-btn",
+                      class: "px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors shadow-sm",
+                      children: "\u4E00\u952E\u68C0\u67E5"
+                    }
+                  ),
+                  /* @__PURE__ */ jsxDEV(
+                    "button",
+                    {
+                      id: "refresh-keys-btn",
+                      class: "px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors shadow-sm",
+                      children: "\u5237\u65B0"
+                    }
+                  ),
+                  /* @__PURE__ */ jsxDEV(
+                    "button",
+                    {
+                      id: "select-invalid-keys-btn",
+                      class: "px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm ml-2 hidden",
+                      children: "\u52FE\u9009\u65E0\u6548\u5BC6\u94A5"
+                    }
+                  )
+                ] })
+              ] }),
+              /* @__PURE__ */ jsxDEV("div", { class: "max-h-96 overflow-y-auto border rounded-lg", children: /* @__PURE__ */ jsxDEV("table", { id: "keys-table", class: "w-full text-left", children: [
+                /* @__PURE__ */ jsxDEV("thead", { class: "bg-slate-50", children: /* @__PURE__ */ jsxDEV("tr", { class: "border-b border-slate-200", children: [
+                  /* @__PURE__ */ jsxDEV("th", { class: "p-3 w-6", children: /* @__PURE__ */ jsxDEV("input", { type: "checkbox", id: "select-all-keys", class: "rounded border-slate-300" }) }),
+                  /* @__PURE__ */ jsxDEV("th", { class: "p-3 text-slate-600 font-semibold", children: "API \u5BC6\u94A5" }),
+                  /* @__PURE__ */ jsxDEV("th", { class: "p-3 text-slate-600 font-semibold", children: "\u72B6\u6001" }),
+                  /* @__PURE__ */ jsxDEV("th", { class: "p-3 text-slate-600 font-semibold", children: "\u5206\u7EC4" }),
+                  /* @__PURE__ */ jsxDEV("th", { class: "p-3 text-slate-600 font-semibold", children: "\u6700\u540E\u68C0\u67E5\u65F6\u95F4" }),
+                  /* @__PURE__ */ jsxDEV("th", { class: "p-3 text-slate-600 font-semibold", children: "\u5931\u8D25\u6B21\u6570" })
+                ] }) }),
+                /* @__PURE__ */ jsxDEV("tbody", { class: "divide-y divide-slate-200" })
+              ] }) }),
+              /* @__PURE__ */ jsxDEV("div", { id: "pagination-controls", class: "mt-4 flex justify-center items-center", children: [
+                /* @__PURE__ */ jsxDEV(
+                  "button",
+                  {
+                    id: "prev-page-btn",
+                    class: "px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors disabled:opacity-50 shadow-sm",
+                    disabled: true,
+                    children: "\u4E0A\u4E00\u9875"
+                  }
+                ),
+                /* @__PURE__ */ jsxDEV("span", { id: "page-info", class: "mx-4 text-slate-600" }),
+                /* @__PURE__ */ jsxDEV(
+                  "button",
+                  {
+                    id: "next-page-btn",
+                    class: "px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors disabled:opacity-50 shadow-sm",
+                    disabled: true,
+                    children: "\u4E0B\u4E00\u9875"
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsxDEV(
+                "button",
+                {
+                  id: "delete-selected-keys-btn",
+                  class: "mt-4 w-full px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition-colors hidden shadow-sm",
+                  children: "\u5220\u9664\u9009\u4E2D"
+                }
+              )
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxDEV("div", { id: "page-add-keys", class: "hidden", children: [
+            /* @__PURE__ */ jsxDEV("h2", { class: "text-3xl font-bold mb-6 text-slate-700", children: "\u6DFB\u52A0\u5BC6\u94A5" }),
+            /* @__PURE__ */ jsxDEV("div", { class: "bg-white p-6 rounded-lg shadow-sm", children: [
+              /* @__PURE__ */ jsxDEV("h3", { class: "text-xl font-semibold mb-4 text-slate-600", children: "\u6279\u91CF\u6DFB\u52A0\u5BC6\u94A5" }),
               /* @__PURE__ */ jsxDEV("form", { id: "add-keys-form", children: [
                 /* @__PURE__ */ jsxDEV(
                   "textarea",
                   {
                     id: "api-keys",
-                    class: "w-full h-40 p-2 border rounded bg-gray-50",
+                    class: "w-full h-48 p-3 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition",
                     placeholder: "\u8BF7\u8F93\u5165API\u5BC6\u94A5\uFF0C\u6BCF\u884C\u4E00\u4E2A"
                   }
                 ),
-                /* @__PURE__ */ jsxDEV("button", { type: "submit", class: "mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition", children: "\u6DFB\u52A0\u5BC6\u94A5" })
+                /* @__PURE__ */ jsxDEV(
+                  "button",
+                  {
+                    type: "submit",
+                    class: "mt-4 w-full px-4 py-2.5 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors shadow-sm",
+                    children: "\u6DFB\u52A0\u5BC6\u94A5"
+                  }
+                )
               ] })
-            ] }),
-            /* @__PURE__ */ jsxDEV("div", { class: "bg-white p-6 rounded-lg shadow-md", children: [
-              /* @__PURE__ */ jsxDEV("div", { class: "flex justify-between items-center mb-4", children: [
-                /* @__PURE__ */ jsxDEV("h3", { class: "text-xl font-semibold", children: "\u5DF2\u5B58\u50A8\u7684\u5BC6\u94A5" }),
-                /* @__PURE__ */ jsxDEV("div", { children: [
-                  /* @__PURE__ */ jsxDEV("button", { id: "check-keys-btn", class: "px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition mr-2", children: "\u4E00\u952E\u68C0\u67E5" }),
-                  /* @__PURE__ */ jsxDEV("button", { id: "refresh-keys-btn", class: "px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition", children: "\u5237\u65B0" })
-                ] })
-              ] }),
-              /* @__PURE__ */ jsxDEV("div", { class: "max-h-60 overflow-y-auto", children: /* @__PURE__ */ jsxDEV("table", { id: "keys-table", class: "w-full text-left", children: [
-                /* @__PURE__ */ jsxDEV("thead", { children: /* @__PURE__ */ jsxDEV("tr", { class: "border-b", children: [
-                  /* @__PURE__ */ jsxDEV("th", { class: "p-2 w-6", children: /* @__PURE__ */ jsxDEV("input", { type: "checkbox", id: "select-all-keys" }) }),
-                  /* @__PURE__ */ jsxDEV("th", { class: "p-2", children: "API \u5BC6\u94A5" }),
-                  /* @__PURE__ */ jsxDEV("th", { class: "p-2", children: "\u72B6\u6001" })
-                ] }) }),
-                /* @__PURE__ */ jsxDEV("tbody", {})
-              ] }) }),
-              /* @__PURE__ */ jsxDEV(
-                "button",
-                {
-                  id: "delete-selected-keys-btn",
-                  class: "mt-4 w-full px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition hidden",
-                  children: "\u5220\u9664\u9009\u4E2D"
-                }
-              )
             ] })
           ] })
         ] })
@@ -2218,29 +2277,86 @@ var Render = ({ isAuthenticated, showWarning }) => {
 										const selectAllCheckbox = document.getElementById('select-all-keys');
 										const deleteSelectedBtn = document.getElementById('delete-selected-keys-btn');
 										const checkKeysBtn = document.getElementById('check-keys-btn');
+										const paginationControls = document.getElementById('pagination-controls');
+										const prevPageBtn = document.getElementById('prev-page-btn');
+										const nextPageBtn = document.getElementById('next-page-btn');
+										const pageInfoSpan = document.getElementById('page-info');
+										const selectInvalidKeysBtn = document.getElementById('select-invalid-keys-btn');
+
+										const navKeysList = document.getElementById('nav-keys-list');
+										const navAddKeys = document.getElementById('nav-add-keys');
+										const pageKeysList = document.getElementById('page-keys-list');
+										const pageAddKeys = document.getElementById('page-add-keys');
+
+										let currentPage = 1;
+										const pageSize = 50;
+										let totalPages = 1;
+
+										const showPage = (pageId) => {
+											[pageKeysList, pageAddKeys].forEach(page => {
+												if (page.id === pageId) {
+													page.classList.remove('hidden');
+												} else {
+													page.classList.add('hidden');
+												}
+											});
+											[navKeysList, navAddKeys].forEach(nav => {
+												if (nav.id === \`nav-\${pageId.split('-')[1]}-\${pageId.split('-')[2]}\`) {
+													nav.classList.add('bg-gray-700');
+													nav.classList.remove('hover:bg-gray-700');
+												} else {
+													nav.classList.remove('bg-gray-700');
+													nav.classList.add('hover:bg-gray-700');
+												}
+											});
+										};
+
+										navKeysList.addEventListener('click', (e) => {
+											e.preventDefault();
+											showPage('page-keys-list');
+										});
+
+										navAddKeys.addEventListener('click', (e) => {
+											e.preventDefault();
+											showPage('page-add-keys');
+										});
+
+										const updatePaginationControls = () => {
+												pageInfoSpan.textContent = \`\u7B2C \${currentPage} / \${totalPages} \u9875\`;
+												prevPageBtn.disabled = currentPage === 1;
+												nextPageBtn.disabled = currentPage >= totalPages;
+										};
 
 										const fetchAndRenderKeys = async () => {
-												keysTableBody.innerHTML = '<tr><td colspan="3" class="p-2 text-center">\u52A0\u8F7D\u4E2D...</td></tr>';
+												keysTableBody.innerHTML = '<tr><td colspan="7" class="p-2 text-center">\u52A0\u8F7D\u4E2D...</td></tr>';
 												try {
-												  const response = await fetch('/api/keys');
-												  const { keys } = await response.json();
+												  const response = await fetch(\`/api/keys?page=\${currentPage}&pageSize=\${pageSize}\`);
+												  const { keys, total } = await response.json();
+												  
+												  totalPages = Math.ceil(total / pageSize);
 												  keysTableBody.innerHTML = '';
 												  if (keys.length === 0) {
-												    keysTableBody.innerHTML = '<tr><td colspan="3" class="p-2 text-center">\u6682\u65E0\u5BC6\u94A5</td></tr>';
+												    keysTableBody.innerHTML = '<tr><td colspan="7" class="p-2 text-center">\u6682\u65E0\u5BC6\u94A5</td></tr>';
 												  } else {
 												    keys.forEach(key => {
+												      const statusMap = { normal: '\u6B63\u5E38', abnormal: '\u5F02\u5E38' };
 												      const row = document.createElement('tr');
-															row.dataset.key = key;
+												      row.className = 'hover:bg-slate-50 transition-colors';
+												      row.dataset.key = key.api_key;
 												      row.innerHTML = \`
-												        <td class="p-2 w-6"><input type="checkbox" class="key-checkbox" data-key="\${key}" /></td>
-												        <td class="p-2 font-mono">\${key}</td>
-												        <td class="p-2 status-cell">\u672A\u77E5</td>
+												        <td class="p-3 w-6"><input type="checkbox" class="key-checkbox rounded border-slate-300" data-key="\${key.api_key}" /></td>
+												        <td class="p-3 font-mono text-sm text-slate-700">\${key.api_key}</td>
+												        <td class="p-3 status-cell">\${statusMap[key.status] || key.status}</td>
+												        <td class="p-3">\${statusMap[key.key_group] || key.key_group}</td>
+												        <td class="p-3 text-sm text-slate-500">\${key.last_checked_at ? new Date(key.last_checked_at).toLocaleString() : 'N/A'}</td>
+												        <td class="p-3 text-center">\${key.failed_count}</td>
 												      \`;
 												      keysTableBody.appendChild(row);
 												    });
 												  }
+												  updatePaginationControls();
 												} catch (error) {
-												  keysTableBody.innerHTML = '<tr><td colspan="3" class="p-2 text-center text-red-500">\u52A0\u8F7D\u5931\u8D25</td></tr>';
+												  keysTableBody.innerHTML = '<tr><td colspan="7" class="p-2 text-center text-red-500">\u52A0\u8F7D\u5931\u8D25</td></tr>';
 												  console.error('Failed to fetch keys:', error);
 												}
 										};
@@ -2297,7 +2413,9 @@ var Render = ({ isAuthenticated, showWarning }) => {
 										});
 
 										checkKeysBtn.addEventListener('click', async () => {
-											const rows = keysTableBody.querySelectorAll('tr');
+											const rows = keysTableBody.querySelectorAll('tr[data-key]');
+											const keysToCheck = Array.from(rows).map(row => row.dataset.key);
+
 											rows.forEach(row => {
 												const statusCell = row.querySelector('.status-cell');
 												if (statusCell) {
@@ -2307,22 +2425,36 @@ var Render = ({ isAuthenticated, showWarning }) => {
 											});
 
 											try {
-												const response = await fetch('/api/keys/check');
-												const results = await response.json();
-												results.forEach(result => {
-													const row = keysTableBody.querySelector(\`tr[data-key="\${result.key}"]\`);
-													if (row) {
-														const statusCell = row.querySelector('.status-cell');
-														if (statusCell) {
-															statusCell.textContent = result.valid ? '\u6709\u6548' : '\u65E0\u6548';
-															statusCell.className = result.valid ? 'p-2 status-cell text-green-500' : 'p-2 status-cell text-red-500';
-														}
-													}
+												const response = await fetch('/api/keys/check', {
+													method: 'POST',
+													headers: { 'Content-Type': 'application/json' },
+													body: JSON.stringify({ keys: keysToCheck }),
 												});
+												if (response.ok) {
+													alert('\u68C0\u67E5\u5B8C\u6210\u3002');
+													fetchAndRenderKeys();
+												} else {
+													const result = await response.json();
+													alert(\`\u68C0\u67E5\u5BC6\u94A5\u5931\u8D25: \${result.error || '\u672A\u77E5\u9519\u8BEF'}\`);
+												}
 											} catch (error) {
-												alert('\u68C0\u67E5\u5BC6\u94A5\u5931\u8D25\uFF0C\u8BF7\u67E5\u770B\u63A7\u5236\u53F0\u83B7\u53D6\u66F4\u591A\u4FE1\u606F\u3002');
+												alert('\u8BF7\u6C42\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u7F51\u7EDC\u8FDE\u63A5\u3002');
 												console.error('Failed to check keys:', error);
 											}
+										});
+
+										selectInvalidKeysBtn.addEventListener('click', () => {
+											const rows = keysTableBody.querySelectorAll('tr');
+											rows.forEach(row => {
+												const statusCell = row.querySelector('.status-cell');
+												if (statusCell && statusCell.textContent === '\u65E0\u6548') {
+													const checkbox = row.querySelector('.key-checkbox');
+													if (checkbox) {
+														checkbox.checked = true;
+													}
+												}
+											});
+											updateDeleteButtonVisibility();
 										});
 
 										addKeysForm.addEventListener('submit', async (e) => {
@@ -2354,6 +2486,20 @@ var Render = ({ isAuthenticated, showWarning }) => {
 
 										refreshKeysBtn.addEventListener('click', fetchAndRenderKeys);
 
+										prevPageBtn.addEventListener('click', () => {
+												if (currentPage > 1) {
+												  currentPage--;
+												  fetchAndRenderKeys();
+												}
+										});
+
+										nextPageBtn.addEventListener('click', () => {
+												if (currentPage < totalPages) {
+												  currentPage++;
+												  fetchAndRenderKeys();
+												}
+										});
+
 										// Initial load
 										fetchAndRenderKeys();
 								});
@@ -2365,13 +2511,22 @@ var Render = ({ isAuthenticated, showWarning }) => {
   ] });
 };
 
+// src/handler.ts
+import { DurableObject } from "cloudflare:workers";
+
 // src/auth.ts
 function getAuthKey(request, sessionKey) {
   if (sessionKey) return sessionKey;
   const cookie = request.headers.get("Cookie");
   if (cookie) {
-    const match = cookie.match(/auth-key=([^;]+)/);
-    if (match) return match[1];
+    const match = cookie.match(/(?:^|;\\s*)auth-key=([^;]+)/);
+    if (match) {
+      try {
+        return decodeURIComponent(match[1]);
+      } catch {
+        return match[1];
+      }
+    }
   }
   const authHeader = request.headers.get("Authorization");
   if (authHeader) {
@@ -2379,18 +2534,13 @@ function getAuthKey(request, sessionKey) {
   }
   return void 0;
 }
-
-// src/handler.ts
-var BASE_URL = "https://generativelanguage.googleapis.com";
-var API_VERSION = "v1beta";
-var API_CLIENT = "genai-js/0.21.0";
-var DEFAULT_EMBEDDINGS_MODEL = "text-embedding-004";
-var DEFAULT_COMPLETIONS_MODEL = "gemini-1.5-flash";
 function isAdminAuthenticated(request, homeAccessKey) {
   if (!homeAccessKey) return false;
   const key = getAuthKey(request);
   return key === homeAccessKey;
 }
+
+// src/handler.ts
 var HttpError = class extends Error {
   constructor(message, status) {
     super(message);
@@ -2405,24 +2555,123 @@ var fixCors = ({ headers, status, statusText }) => {
   newHeaders.set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-goog-api-key");
   return { headers: newHeaders, status, statusText };
 };
+var BASE_URL = "https://generativelanguage.googleapis.com";
+var API_VERSION = "v1beta";
+var API_CLIENT = "genai-js/0.21.0";
 var makeHeaders = (apiKey, more) => ({
   "x-goog-api-client": API_CLIENT,
   ...apiKey && { "x-goog-api-key": apiKey },
   ...more
 });
-var LoadBalancer = class {
+var LoadBalancer = class extends DurableObject {
+  /**
+   * The constructor is invoked once upon creation of the Durable Object, i.e. the first call to
+   * 	`DurableObjectStub::get` for a given identifier (no-op constructors can be omitted)
+   *
+   * @param ctx - The interface for interacting with Durable Object state
+   * @param env - The interface to reference bindings declared in wrangler.jsonc
+   */
   constructor(ctx, env) {
-    this.ctx = ctx;
+    super(ctx, env);
     this.env = env;
-    this.ctx.storage.sql.exec("CREATE TABLE IF NOT EXISTS api_keys (api_key TEXT PRIMARY KEY)");
+    this.ctx.storage.sql.exec(`
+			CREATE TABLE IF NOT EXISTS api_keys (
+				api_key TEXT PRIMARY KEY
+			);
+			CREATE TABLE IF NOT EXISTS api_key_statuses (
+				api_key TEXT PRIMARY KEY,
+				status TEXT CHECK(status IN ('normal', 'abnormal')) NOT NULL DEFAULT 'normal',
+				last_checked_at INTEGER,
+				failed_count INTEGER NOT NULL DEFAULT 0,
+				key_group TEXT CHECK(key_group IN ('normal', 'abnormal')) NOT NULL DEFAULT 'normal',
+				FOREIGN KEY(api_key) REFERENCES api_keys(api_key) ON DELETE CASCADE
+			);
+		`);
+    this.ctx.storage.setAlarm(Date.now() + 5 * 60 * 1e3);
+  }
+  async alarm() {
+    const abnormalKeys = await this.ctx.storage.sql.exec("SELECT api_key, failed_count FROM api_key_statuses WHERE key_group = 'abnormal'").raw();
+    for (const row of Array.from(abnormalKeys)) {
+      const apiKey = row[0];
+      const failedCount = row[1];
+      try {
+        const response = await fetch(`${BASE_URL}/${API_VERSION}/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: "hi" }] }]
+          })
+        });
+        if (response.ok) {
+          await this.ctx.storage.sql.exec(
+            "UPDATE api_key_statuses SET key_group = 'normal', failed_count = 0, last_checked_at = ? WHERE api_key = ?",
+            Date.now(),
+            apiKey
+          );
+        } else if (response.status === 429) {
+          const newFailedCount = failedCount + 1;
+          if (newFailedCount >= 5) {
+            await this.ctx.storage.sql.exec("DELETE FROM api_keys WHERE api_key = ?", apiKey);
+          } else {
+            await this.ctx.storage.sql.exec(
+              "UPDATE api_key_statuses SET failed_count = ?, last_checked_at = ? WHERE api_key = ?",
+              newFailedCount,
+              Date.now(),
+              apiKey
+            );
+          }
+        }
+      } catch (e) {
+        console.error(`Error checking abnormal key ${apiKey}:`, e);
+      }
+    }
+    const twelveHoursAgo = Date.now() - 12 * 60 * 60 * 1e3;
+    const normalKeys = await this.ctx.storage.sql.exec(
+      "SELECT api_key FROM api_key_statuses WHERE key_group = 'normal' AND (last_checked_at IS NULL OR last_checked_at < ?)",
+      twelveHoursAgo
+    ).raw();
+    for (const row of Array.from(normalKeys)) {
+      const apiKey = row[0];
+      try {
+        const response = await fetch(`${BASE_URL}/${API_VERSION}/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: "hi" }] }]
+          })
+        });
+        if (response.status === 429) {
+          await this.ctx.storage.sql.exec(
+            "UPDATE api_key_statuses SET key_group = 'abnormal', failed_count = 1, last_checked_at = ? WHERE api_key = ?",
+            Date.now(),
+            apiKey
+          );
+        } else {
+          await this.ctx.storage.sql.exec("UPDATE api_key_statuses SET last_checked_at = ? WHERE api_key = ?", Date.now(), apiKey);
+        }
+      } catch (e) {
+        console.error(`Error checking normal key ${apiKey}:`, e);
+      }
+    }
+    this.ctx.storage.setAlarm(Date.now() + 5 * 60 * 1e3);
   }
   async fetch(request) {
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: fixCors({}).headers
+      });
+    }
     const url = new URL(request.url);
     const pathname = url.pathname;
     if (pathname === "/favicon.ico" || pathname === "/robots.txt") {
       return new Response("", { status: 204 });
     }
-    if (pathname === "/api/keys" && ["POST", "GET", "DELETE"].includes(request.method) || pathname === "/api/keys/check" && request.method === "GET") {
+    if (pathname === "/api/keys" || pathname === "/api/keys/check") {
       if (!isAdminAuthenticated(request, this.env.HOME_ACCESS_KEY)) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
@@ -2433,50 +2682,59 @@ var LoadBalancer = class {
         return this.handleApiKeys(request);
       }
       if (pathname === "/api/keys" && request.method === "GET") {
-        return this.getAllApiKeys();
+        return this.getAllApiKeys(request);
       }
       if (pathname === "/api/keys" && request.method === "DELETE") {
         return this.handleDeleteApiKeys(request);
       }
-      if (pathname === "/api/keys/check" && request.method === "GET") {
-        return this.handleApiKeysCheck();
+      if (pathname === "/api/keys/check" && request.method === "POST") {
+        return this.handleApiKeysCheck(request);
       }
     }
     const search = url.search;
-    if (pathname.endsWith("/chat/completions") || pathname.endsWith("/completions") || pathname.endsWith("/embeddings") || pathname.endsWith("/models")) {
+    if (pathname.endsWith("/chat/completions") || pathname.endsWith("/completions") || pathname.endsWith("/embeddings") || pathname.endsWith("/v1/models")) {
       return this.handleOpenAI(request);
     }
     const authKey = this.env.AUTH_KEY;
     let targetUrl = `${BASE_URL}${pathname}${search}`;
+    if (this.env.FORWARD_CLIENT_KEY_ENABLED) {
+      return this.forwardRequestWithLoadBalancing(targetUrl, request);
+    }
     if (authKey) {
+      let isAuthorized = false;
       if (search.includes("key=")) {
         const urlObj = new URL(targetUrl);
         const requestKey = urlObj.searchParams.get("key");
-        if (requestKey) {
-          if (requestKey !== authKey) {
-            return new Response("Unauthorized", { status: 401, headers: fixCors({}).headers });
-          }
-          urlObj.searchParams.delete("key");
-          targetUrl = urlObj.toString();
-          return this.forwardRequestWithLoadBalancing(targetUrl, request);
+        if (requestKey && requestKey === authKey) {
+          isAuthorized = true;
         }
       } else {
         const requestKey = request.headers.get("x-goog-api-key");
-        if (requestKey !== authKey) {
-          return new Response("Unauthorized", { status: 401, headers: fixCors({}).headers });
+        if (requestKey && requestKey === authKey) {
+          isAuthorized = true;
         }
-        return this.forwardRequestWithLoadBalancing(targetUrl, request);
+      }
+      if (!isAuthorized) {
+        return new Response("Unauthorized", { status: 401, headers: fixCors({}).headers });
       }
     }
-    return new Response("Request not handled by any route", { status: 404 });
+    return this.forwardRequestWithLoadBalancing(targetUrl, request);
   }
-  async forwardRequest(targetUrl, request, headers) {
+  async forwardRequest(targetUrl, request, headers, apiKey) {
     console.log(`Request Sending to Gemini: ${targetUrl}`);
     const response = await fetch(targetUrl, {
       method: request.method,
       headers,
-      body: request.body
+      body: request.method === "GET" || request.method === "HEAD" ? null : request.body
     });
+    if (response.status === 429) {
+      console.log(`API key ${apiKey} received 429 status code.`);
+      await this.ctx.storage.sql.exec(
+        "UPDATE api_key_statuses SET key_group = 'abnormal', failed_count = failed_count + 1, last_checked_at = ? WHERE api_key = ?",
+        Date.now(),
+        apiKey
+      );
+    }
     console.log("Call Gemini Success");
     const responseHeaders = new Headers(response.headers);
     responseHeaders.set("Access-Control-Allow-Origin", "*");
@@ -2490,21 +2748,32 @@ var LoadBalancer = class {
       headers: responseHeaders
     });
   }
+  // 对请求进行负载均衡，随机分发key
   async forwardRequestWithLoadBalancing(targetUrl, request) {
     try {
+      let headers = new Headers();
+      const url = new URL(targetUrl);
+      if (request.headers.has("content-type")) {
+        headers.set("content-type", request.headers.get("content-type"));
+      }
+      if (this.env.FORWARD_CLIENT_KEY_ENABLED) {
+        const clientApiKey = this.extractClientApiKey(request, url);
+        if (clientApiKey) {
+          url.searchParams.set("key", clientApiKey);
+          headers.set("x-goog-api-key", clientApiKey);
+        }
+        return this.forwardRequest(url.toString(), request, headers, clientApiKey || "");
+      }
       const apiKey = await this.getRandomApiKey();
       if (!apiKey) {
         return new Response("No API keys configured in the load balancer.", { status: 500 });
       }
-      let headers = new Headers();
+      url.searchParams.set("key", apiKey);
       headers.set("x-goog-api-key", apiKey);
-      if (request.headers.has("content-type")) {
-        headers.set("content-type", request.headers.get("content-type"));
-      }
-      return this.forwardRequest(targetUrl, request, headers);
+      return this.forwardRequest(url.toString(), request, headers, apiKey);
     } catch (error) {
       console.error("Failed to fetch:", error);
-      return new Response("Internal Server Error\n" + String(error), {
+      return new Response("Internal Server Error\n" + error, {
         status: 500,
         headers: { "Content-Type": "text/plain" }
       });
@@ -2534,6 +2803,7 @@ var LoadBalancer = class {
     return new Response(responseBody, fixCors(response));
   }
   async handleEmbeddings(req, apiKey) {
+    const DEFAULT_EMBEDDINGS_MODEL = "text-embedding-004";
     if (typeof req.model !== "string") {
       throw new HttpError("model is not specified", 400);
     }
@@ -2555,7 +2825,7 @@ var LoadBalancer = class {
       body: JSON.stringify({
         requests: req.input.map((text) => ({
           model,
-          content: { parts: [{ text }] },
+          content: { parts: { text } },
           outputDimensionality: req.dimensions
         }))
       })
@@ -2580,7 +2850,8 @@ var LoadBalancer = class {
     return new Response(responseBody, fixCors(response));
   }
   async handleCompletions(req, apiKey) {
-    let model = DEFAULT_COMPLETIONS_MODEL;
+    const DEFAULT_MODEL = "gemini-2.5-flash";
+    let model = DEFAULT_MODEL;
     switch (true) {
       case typeof req.model !== "string":
         break;
@@ -2589,7 +2860,7 @@ var LoadBalancer = class {
         break;
       case req.model.startsWith("gemini-"):
       case req.model.startsWith("gemma-"):
-      case req.model.startsWith("a-star-"):
+      case req.model.startsWith("learnlm-"):
         model = req.model;
     }
     let body = await this.transformRequest(req);
@@ -2643,6 +2914,7 @@ var LoadBalancer = class {
             model,
             id,
             last: [],
+            reasoningLast: [],
             shared
           })
         ).pipeThrough(new TextEncoderStream());
@@ -2665,6 +2937,7 @@ var LoadBalancer = class {
     }
     return new Response(responseBody, fixCors(response));
   }
+  // 辅助方法
   generateId() {
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     const randomChar = () => characters[Math.floor(Math.random() * characters.length)];
@@ -2675,7 +2948,8 @@ var LoadBalancer = class {
       "HARM_CATEGORY_HATE_SPEECH",
       "HARM_CATEGORY_SEXUALLY_EXPLICIT",
       "HARM_CATEGORY_DANGEROUS_CONTENT",
-      "HARM_CATEGORY_HARASSMENT"
+      "HARM_CATEGORY_HARASSMENT",
+      "HARM_CATEGORY_CIVIC_INTEGRITY"
     ];
     const safetySettings = harmCategory.map((category) => ({
       category,
@@ -2756,6 +3030,11 @@ var LoadBalancer = class {
         default:
           throw new HttpError(`Unknown message role: "${item.role}"`, 400);
       }
+      if (system_instruction) {
+        if (!contents[0]?.parts || Array.isArray(contents[0]?.parts) && !contents[0]?.parts.some((part) => part.text)) {
+          contents.unshift({ role: "user", parts: [{ text: " " }] });
+        }
+      }
       contents.push({
         role: item.role,
         parts: await this.transformMsg(item)
@@ -2775,19 +3054,76 @@ var LoadBalancer = class {
           parts.push({ text: item.text });
           break;
         case "image_url":
-          parts.push({ text: "[\u56FE\u7247\u5185\u5BB9]" });
+          parts.push(await this.parseImg(item.image_url.url));
+          break;
+        case "input_audio":
+          parts.push({
+            inlineData: {
+              mimeType: "audio/" + item.input_audio.format,
+              data: item.input_audio.data
+            }
+          });
           break;
         default:
           throw new HttpError(`Unknown "content" item type: "${item.type}"`, 400);
       }
     }
+    if (content.every((item) => item.type === "image_url")) {
+      parts.push({ text: "" });
+    }
     return parts;
+  }
+  async parseImg(url) {
+    let mimeType, data;
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`${response.status} ${response.statusText} (${url})`);
+        }
+        mimeType = response.headers.get("content-type");
+        data = Buffer.from(await response.arrayBuffer()).toString("base64");
+      } catch (err) {
+        throw new Error("Error fetching image: " + err.message);
+      }
+    } else {
+      const match = url.match(/^data:(?<mimeType>.*?)(;base64)?,(?<data>.*)$/);
+      if (!match) {
+        throw new HttpError("Invalid image data: " + url, 400);
+      }
+      ({ mimeType, data } = match.groups);
+    }
+    return {
+      inlineData: {
+        mimeType,
+        data
+      }
+    };
+  }
+  adjustSchema(schema) {
+    const obj = schema[schema.type];
+    delete obj.strict;
+    return this.adjustProps(schema);
+  }
+  adjustProps(schemaPart) {
+    if (typeof schemaPart !== "object" || schemaPart === null) {
+      return;
+    }
+    if (Array.isArray(schemaPart)) {
+      schemaPart.forEach(this.adjustProps);
+    } else {
+      if (schemaPart.type === "object" && schemaPart.properties && schemaPart.additionalProperties === false) {
+        delete schemaPart.additionalProperties;
+      }
+      Object.values(schemaPart).forEach(this.adjustProps);
+    }
   }
   transformTools(req) {
     let tools, tool_config;
     if (req.tools) {
       const funcs = req.tools.filter((tool) => tool.type === "function" && tool.function?.name !== "googleSearch");
       if (funcs.length > 0) {
+        funcs.forEach(this.adjustSchema);
         tools = [{ function_declarations: funcs.map((schema) => schema.function) }];
       }
     }
@@ -2813,20 +3149,40 @@ var LoadBalancer = class {
     };
     const transformCandidatesMessage = (cand) => {
       const message = { role: "assistant", content: [] };
+      let reasoningContent = "";
+      let finalContent = "";
       for (const part of cand.content?.parts ?? []) {
         if (part.text) {
-          message.content.push(part.text);
+          const isThoughtContent = part.thoughtToken || part.thought || part.thoughtTokens || part.executableCode && part.executableCode.language === "thought" || // 检查文本是否以思考标记开头
+          part.text && (part.text.startsWith("<thinking>") || part.text.startsWith("\u601D\u8003\uFF1A") || part.text.startsWith("Thinking:"));
+          if (isThoughtContent) {
+            let cleanText = part.text;
+            if (cleanText.startsWith("<thinking>")) {
+              cleanText = cleanText.replace("<thinking>", "").replace("</thinking>", "");
+            } else if (cleanText.startsWith("\u601D\u8003\uFF1A")) {
+              cleanText = cleanText.replace("\u601D\u8003\uFF1A", "");
+            } else if (cleanText.startsWith("Thinking:")) {
+              cleanText = cleanText.replace("Thinking:", "");
+            }
+            reasoningContent += cleanText;
+          } else {
+            finalContent += part.text;
+          }
         }
       }
-      return {
+      const messageObj = {
         index: cand.index || 0,
         message: {
-          ...message,
-          content: message.content.join("") || null
+          role: "assistant",
+          content: finalContent || null
         },
         logprobs: null,
         finish_reason: reasonsMap[cand.finishReason] || cand.finishReason
       };
+      if (reasoningContent) {
+        messageObj.message.reasoning_content = reasoningContent;
+      }
+      return messageObj;
     };
     const obj = {
       id,
@@ -2842,6 +3198,7 @@ var LoadBalancer = class {
     };
     return JSON.stringify(obj);
   }
+  // 流处理方法
   parseStream(chunk, controller) {
     this.buffer += chunk;
     const lines = this.buffer.split("\n");
@@ -2859,6 +3216,7 @@ var LoadBalancer = class {
     if (this.buffer) {
       try {
         controller.enqueue(JSON.parse(this.buffer));
+        this.shared.is_buffers_rest = true;
       } catch (e) {
         console.error("Error parsing remaining buffer:", e);
       }
@@ -2883,38 +3241,116 @@ var LoadBalancer = class {
       for (const cand of candidates) {
         const { index, content, finishReason } = cand;
         const { parts } = content;
-        const text = parts.map((p) => p.text).join("");
-        if (this.last[index] === void 0) {
-          this.last[index] = "";
-        }
-        const lastText = this.last[index] || "";
-        let delta = "";
-        if (text.startsWith(lastText)) {
-          delta = text.substring(lastText.length);
-        } else {
-          let i = 0;
-          while (i < text.length && i < lastText.length && text[i] === lastText[i]) {
-            i++;
-          }
-          delta = text.substring(i);
-        }
-        this.last[index] = text;
-        const obj = {
-          id: this.id,
-          object: "chat.completion.chunk",
-          created: Math.floor(Date.now() / 1e3),
-          model: this.model,
-          choices: [
-            {
-              index,
-              delta: { content: delta },
-              finish_reason: reasonsMap[finishReason] || finishReason
+        let reasoningText = "";
+        let finalText = "";
+        for (const part of parts) {
+          if (part.text) {
+            const isThoughtContent = part.thoughtToken || part.thought || part.thoughtTokens || part.executableCode && part.executableCode.language === "thought" || // 检查文本是否以思考标记开头
+            part.text && (part.text.startsWith("<thinking>") || part.text.startsWith("\u601D\u8003\uFF1A") || part.text.startsWith("Thinking:"));
+            if (isThoughtContent) {
+              let cleanText = part.text;
+              if (cleanText.startsWith("<thinking>")) {
+                cleanText = cleanText.replace("<thinking>", "").replace("</thinking>", "");
+              } else if (cleanText.startsWith("\u601D\u8003\uFF1A")) {
+                cleanText = cleanText.replace("\u601D\u8003\uFF1A", "");
+              } else if (cleanText.startsWith("Thinking:")) {
+                cleanText = cleanText.replace("Thinking:", "");
+              }
+              reasoningText += cleanText;
+            } else {
+              finalText += part.text;
             }
-          ]
-        };
-        controller.enqueue(`data: ${JSON.stringify(obj)}
+          }
+        }
+        if (reasoningText) {
+          if (!this.reasoningLast) this.reasoningLast = {};
+          if (this.reasoningLast[index] === void 0) {
+            this.reasoningLast[index] = "";
+          }
+          const lastReasoningText = this.reasoningLast[index] || "";
+          let reasoningDelta = "";
+          if (reasoningText.startsWith(lastReasoningText)) {
+            reasoningDelta = reasoningText.substring(lastReasoningText.length);
+          } else {
+            let i = 0;
+            while (i < reasoningText.length && i < lastReasoningText.length && reasoningText[i] === lastReasoningText[i]) {
+              i++;
+            }
+            reasoningDelta = reasoningText.substring(i);
+          }
+          this.reasoningLast[index] = reasoningText;
+          if (reasoningDelta) {
+            const reasoningObj = {
+              id: this.id,
+              object: "chat.completion.chunk",
+              created: Math.floor(Date.now() / 1e3),
+              model: this.model,
+              choices: [
+                {
+                  index,
+                  delta: { reasoning_content: reasoningDelta },
+                  finish_reason: null
+                }
+              ]
+            };
+            controller.enqueue(`data: ${JSON.stringify(reasoningObj)}
 
 `);
+          }
+        }
+        if (finalText) {
+          if (this.last[index] === void 0) {
+            this.last[index] = "";
+          }
+          const lastText = this.last[index] || "";
+          let delta = "";
+          if (finalText.startsWith(lastText)) {
+            delta = finalText.substring(lastText.length);
+          } else {
+            let i = 0;
+            while (i < finalText.length && i < lastText.length && finalText[i] === lastText[i]) {
+              i++;
+            }
+            delta = finalText.substring(i);
+          }
+          this.last[index] = finalText;
+          if (delta) {
+            const obj = {
+              id: this.id,
+              object: "chat.completion.chunk",
+              created: Math.floor(Date.now() / 1e3),
+              model: this.model,
+              choices: [
+                {
+                  index,
+                  delta: { content: delta },
+                  finish_reason: null
+                }
+              ]
+            };
+            controller.enqueue(`data: ${JSON.stringify(obj)}
+
+`);
+          }
+        }
+        if (finishReason) {
+          const finishObj = {
+            id: this.id,
+            object: "chat.completion.chunk",
+            created: Math.floor(Date.now() / 1e3),
+            model: this.model,
+            choices: [
+              {
+                index,
+                delta: {},
+                finish_reason: reasonsMap[finishReason] || finishReason
+              }
+            ]
+          };
+          controller.enqueue(`data: ${JSON.stringify(finishObj)}
+
+`);
+        }
       }
     }
   }
@@ -2940,6 +3376,9 @@ var LoadBalancer = class {
     }
     controller.enqueue("data: [DONE]\n\n");
   }
+  // =================================================================================================
+  // Admin API Handlers
+  // =================================================================================================
   async handleApiKeys(request) {
     try {
       const { keys } = await request.json();
@@ -2951,6 +3390,7 @@ var LoadBalancer = class {
       }
       for (const key of keys) {
         await this.ctx.storage.sql.exec("INSERT OR IGNORE INTO api_keys (api_key) VALUES (?)", key);
+        await this.ctx.storage.sql.exec("INSERT OR IGNORE INTO api_key_statuses (api_key) VALUES (?)", key);
       }
       return new Response(JSON.stringify({ message: "API\u5BC6\u94A5\u6DFB\u52A0\u6210\u529F\u3002" }), {
         status: 200,
@@ -2991,32 +3431,43 @@ var LoadBalancer = class {
       });
     }
   }
-  async handleApiKeysCheck() {
+  async handleApiKeysCheck(request) {
     try {
-      const d1Result = await this.ctx.storage.sql.exec("SELECT api_key FROM api_keys");
-      const results = Array.from(d1Result);
-      const keys = results.map((row) => row.api_key);
+      const { keys } = await request.json();
+      if (!Array.isArray(keys) || keys.length === 0) {
+        return new Response(JSON.stringify({ error: "\u8BF7\u6C42\u4F53\u65E0\u6548\uFF0C\u9700\u8981\u4E00\u4E2A\u5305\u542Bkey\u7684\u975E\u7A7A\u6570\u7EC4\u3002" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
       const checkResults = await Promise.all(
         keys.map(async (key) => {
           try {
-            const response = await fetch(`${BASE_URL}/${API_VERSION}/models?key=${key}`);
+            const response = await fetch(`${BASE_URL}/${API_VERSION}/models/gemini-2.5-flash:generateContent?key=${key}`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: "hi" }] }]
+              })
+            });
             return { key, valid: response.ok, error: response.ok ? null : await response.text() };
           } catch (e) {
             return { key, valid: false, error: e.message };
           }
         })
       );
-      const invalidKeys = checkResults.filter((result) => !result.valid).map((result) => result.key);
-      if (invalidKeys.length > 0) {
-        console.log("InvalidKeys: ", JSON.stringify(invalidKeys));
-        const batchSize = 500;
-        for (let i = 0; i < invalidKeys.length; i += batchSize) {
-          const batch = invalidKeys.slice(i, i + batchSize);
-          const placeholders = batch.map(() => "?").join(",");
-          const statement = `DELETE FROM api_keys WHERE api_key IN (${placeholders})`;
-          await this.ctx.storage.sql.exec(statement, ...batch);
+      for (const result of checkResults) {
+        if (result.valid) {
+          await this.ctx.storage.sql.exec(
+            "UPDATE api_key_statuses SET status = 'normal', key_group = 'normal', failed_count = 0, last_checked_at = ? WHERE api_key = ?",
+            Date.now(),
+            result.key
+          );
+        } else {
+          await this.ctx.storage.sql.exec("DELETE FROM api_keys WHERE api_key = ?", result.key);
         }
-        console.log(`\u79FB\u9664\u4E86 ${invalidKeys.length} \u4E2A\u65E0\u6548\u7684API\u5BC6\u94A5\u3002`);
       }
       return new Response(JSON.stringify(checkResults), {
         headers: { "Content-Type": "application/json" }
@@ -3029,12 +3480,24 @@ var LoadBalancer = class {
       });
     }
   }
-  async getAllApiKeys() {
+  async getAllApiKeys(request) {
     try {
-      const d1Result = await this.ctx.storage.sql.exec("SELECT * FROM api_keys");
-      const results = Array.from(d1Result);
-      const keys = results.map((row) => row.api_key);
-      return new Response(JSON.stringify({ keys }), {
+      const url = new URL(request.url);
+      const page = parseInt(url.searchParams.get("page") || "1", 10);
+      const pageSize = parseInt(url.searchParams.get("pageSize") || "50", 10);
+      const offset = (page - 1) * pageSize;
+      const totalResult = await this.ctx.storage.sql.exec("SELECT COUNT(*) as count FROM api_key_statuses").raw();
+      const totalArray = Array.from(totalResult);
+      const total = totalArray.length > 0 ? totalArray[0][0] : 0;
+      const results = await this.ctx.storage.sql.exec("SELECT api_key, status, key_group, last_checked_at, failed_count FROM api_key_statuses LIMIT ? OFFSET ?", pageSize, offset).raw();
+      const keys = results ? Array.from(results).map((row) => ({
+        api_key: row[0],
+        status: row[1],
+        key_group: row[2],
+        last_checked_at: row[3],
+        failed_count: row[4]
+      })) : [];
+      return new Response(JSON.stringify({ keys, total }), {
         headers: { "Content-Type": "application/json" }
       });
     } catch (error) {
@@ -3045,13 +3508,40 @@ var LoadBalancer = class {
       });
     }
   }
+  // =================================================================================================
+  // Helper Methods
+  // =================================================================================================
+  /**
+   * 从请求中提取客户端的 API key
+   * 支持多种传递方式：查询参数、x-goog-api-key header、Authorization header
+   */
+  extractClientApiKey(request, url) {
+    if (url.searchParams.has("key")) {
+      const key = url.searchParams.get("key");
+      if (key) return key;
+    }
+    const googApiKey = request.headers.get("x-goog-api-key");
+    if (googApiKey) return googApiKey;
+    const authHeader = request.headers.get("Authorization");
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      return authHeader.substring(7);
+    }
+    return null;
+  }
   async getRandomApiKey() {
     try {
-      const d1Result = await this.ctx.storage.sql.exec("SELECT api_key FROM api_keys ORDER BY RANDOM() LIMIT 1");
-      const results = Array.from(d1Result);
-      if (results && results.length > 0) {
-        const key = results[0].api_key;
-        console.log(`Gemini Selected API Key: ${key}`);
+      let results = await this.ctx.storage.sql.exec("SELECT api_key FROM api_key_statuses WHERE key_group = 'normal' ORDER BY RANDOM() LIMIT 1").raw();
+      let keys = Array.from(results);
+      if (keys && keys.length > 0) {
+        const key = keys[0][0];
+        console.log(`Gemini Selected API Key from normal group: ${key}`);
+        return key;
+      }
+      results = await this.ctx.storage.sql.exec("SELECT api_key FROM api_key_statuses WHERE key_group = 'abnormal' ORDER BY RANDOM() LIMIT 1").raw();
+      keys = Array.from(results);
+      if (keys && keys.length > 0) {
+        const key = keys[0][0];
+        console.log(`Gemini Selected API Key from abnormal group: ${key}`);
         return key;
       }
       return null;
@@ -3062,11 +3552,26 @@ var LoadBalancer = class {
   }
   async handleOpenAI(request) {
     const authKey = this.env.AUTH_KEY;
-    if (authKey) {
-      const authHeader = request.headers.get("Authorization");
-      const token = authHeader?.replace("Bearer ", "");
-      if (token !== authKey) {
-        return new Response("Unauthorized", { status: 401, headers: fixCors({}).headers });
+    let apiKey;
+    const authHeader = request.headers.get("Authorization");
+    apiKey = authHeader?.replace("Bearer ", "") ?? null;
+    if (this.env.FORWARD_CLIENT_KEY_ENABLED) {
+      if (!apiKey) {
+        return new Response("No API key found in the client headers,please check your request!", { status: 400 });
+      }
+    } else {
+      if (!apiKey) {
+        return new Response("No API key found in the client headers,please check your request!", { status: 400 });
+      }
+      if (authKey) {
+        const token = authHeader?.replace("Bearer ", "");
+        if (token !== authKey) {
+          return new Response("Unauthorized", { status: 401, headers: fixCors({}).headers });
+        }
+        apiKey = await this.getRandomApiKey();
+        if (!apiKey) {
+          return new Response("No API keys configured in the load balancer.", { status: 500 });
+        }
       }
     }
     const url = new URL(request.url);
@@ -3080,10 +3585,6 @@ var LoadBalancer = class {
       console.error(err);
       return new Response(err.message, fixCors({ statusText: err.message ?? "Internal Server Error", status: 500 }));
     };
-    const apiKey = await this.getRandomApiKey();
-    if (!apiKey) {
-      return new Response("No API keys configured in the load balancer.", { status: 500 });
-    }
     switch (true) {
       case pathname.endsWith("/chat/completions"):
         assert(request.method === "POST");
@@ -3247,7 +3748,7 @@ app.get("/", (c) => {
 });
 app.post("/", async (c) => {
   const { key } = await c.req.json();
-  if (key === String(c.env.HOME_ACCESS_KEY)) {
+  if (key === c.env.HOME_ACCESS_KEY) {
     setCookie(c, "auth-key", key, { maxAge: 60 * 60 * 24 * 30, path: "/" });
     return c.json({ success: true });
   }
@@ -3255,13 +3756,6 @@ app.post("/", async (c) => {
 });
 app.get("/favicon.ico", async (c) => {
   return c.text("Not found", 404);
-});
-app.options("*", (c) => {
-  return c.text("", 204, {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, x-goog-api-key"
-  });
 });
 app.all("*", async (c) => {
   const id = c.env.LOAD_BALANCER.idFromName("loadbalancer");
