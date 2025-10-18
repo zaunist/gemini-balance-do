@@ -40,7 +40,15 @@
 1.  **第一步：部署 Durable Object Worker**
     此步骤更新后端的 DO 核心逻辑。
     ```bash
-    pnpm run worker:deploy
+    # (根据你的操作系统选择)
+    # Windows CMD:
+    set CLOUDFLARE_API_TOKEN=YOUR_API_TOKEN&&pnpm run worker:deploy
+    
+    # PowerShell:
+    $env:CLOUDFLARE_API_TOKEN="YOUR_API_TOKEN"; pnpm run worker:deploy
+
+    # Linux/macOS/WSL:
+    CLOUDFLARE_API_TOKEN=YOUR_API_TOKEN pnpm run worker:deploy
     ```
 
 2.  **第二步：部署 Cloudflare Pages 项目**
