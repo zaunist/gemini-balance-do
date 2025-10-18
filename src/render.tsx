@@ -107,12 +107,13 @@ export const Render = ({ isAuthenticated, showWarning }: { isAuthenticated: bool
 										</button>
 										<button
 											id="select-invalid-keys-btn"
-											class="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm ml-2 hidden"
+											class="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm ml-2"
 										>
-											勾选无效密钥
+											一键选中所有异常的 key
 										</button>
 									</div>
 								</div>
+								<div id="selection-stats" class="mt-2 mb-2 text-sm text-slate-600"></div>
 								<div class="max-h-96 overflow-y-auto border rounded-lg">
 									<table id="keys-table" class="w-full text-left">
 										<thead class="bg-slate-50">
@@ -193,6 +194,7 @@ export const Render = ({ isAuthenticated, showWarning }: { isAuthenticated: bool
 										const nextPageBtn = document.getElementById('next-page-btn');
 										const pageInfoSpan = document.getElementById('page-info');
 										const selectInvalidKeysBtn = document.getElementById('select-invalid-keys-btn');
+										const selectionStatsDiv = document.getElementById('selection-stats');
 
 										const navKeysList = document.getElementById('nav-keys-list');
 										const navAddKeys = document.getElementById('nav-add-keys');
@@ -254,6 +256,7 @@ export const Render = ({ isAuthenticated, showWarning }: { isAuthenticated: bool
 												      const row = document.createElement('tr');
 												      row.className = 'hover:bg-slate-50 transition-colors';
 												      row.dataset.key = key.api_key;
+												      row.dataset.status = key.status;
 												      row.innerHTML = \`
 												        <td class="p-3 w-6"><input type="checkbox" class="key-checkbox rounded border-slate-300" data-key="\${key.api_key}" /></td>
 												        <td class="p-3 font-mono text-sm text-slate-700">\${key.api_key}</td>
@@ -275,11 +278,36 @@ export const Render = ({ isAuthenticated, showWarning }: { isAuthenticated: bool
 										const updateDeleteButtonVisibility = () => {
 												const selectedKeys = document.querySelectorAll('.key-checkbox:checked');
 												deleteSelectedBtn.classList.toggle('hidden', selectedKeys.length === 0);
+												updateSelectionStats();
+										};
+
+										const updateSelectionStats = () => {
+											const selectedCheckboxes = document.querySelectorAll('.key-checkbox:checked');
+											if (selectedCheckboxes.length === 0) {
+												selectionStatsDiv.textContent = '';
+												return;
+											}
+
+											let normalCount = 0;
+											let abnormalCount = 0;
+
+											selectedCheckboxes.forEach(checkbox => {
+												const row = checkbox.closest('tr');
+												const status = row.dataset.status;
+												if (status === 'normal') {
+													normalCount++;
+												} else if (status === 'abnormal') {
+													abnormalCount++;
+												}
+											});
+											
+											selectionStatsDiv.textContent = \`已选中 \${selectedCheckboxes.length} 个 key，其中 \${normalCount} 个 key 状态正常，\${abnormalCount} 个 key 状态异常。\`;
 										};
 
 										keysTableBody.addEventListener('change', (e) => {
 												if (e.target.classList.contains('key-checkbox')) {
 												  updateDeleteButtonVisibility();
+												  updateSelectionStats();
 												}
 										});
 
@@ -289,6 +317,7 @@ export const Render = ({ isAuthenticated, showWarning }: { isAuthenticated: bool
 												  checkbox.checked = selectAllCheckbox.checked;
 												});
 												updateDeleteButtonVisibility();
+												updateSelectionStats();
 										});
 
 										deleteSelectedBtn.addEventListener('click', async () => {
@@ -355,17 +384,15 @@ export const Render = ({ isAuthenticated, showWarning }: { isAuthenticated: bool
 										});
 
 										selectInvalidKeysBtn.addEventListener('click', () => {
-											const rows = keysTableBody.querySelectorAll('tr');
+											const rows = keysTableBody.querySelectorAll('tr[data-status="abnormal"]');
 											rows.forEach(row => {
-												const statusCell = row.querySelector('.status-cell');
-												if (statusCell && statusCell.textContent === '无效') {
-													const checkbox = row.querySelector('.key-checkbox');
-													if (checkbox) {
-														checkbox.checked = true;
-													}
+												const checkbox = row.querySelector('.key-checkbox');
+												if (checkbox) {
+													checkbox.checked = true;
 												}
 											});
 											updateDeleteButtonVisibility();
+											updateSelectionStats();
 										});
 
 										addKeysForm.addEventListener('submit', async (e) => {

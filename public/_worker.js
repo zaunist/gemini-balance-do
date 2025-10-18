@@ -2190,12 +2190,13 @@ var Render = ({ isAuthenticated, showWarning }) => {
                     "button",
                     {
                       id: "select-invalid-keys-btn",
-                      class: "px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm ml-2 hidden",
-                      children: "\u52FE\u9009\u65E0\u6548\u5BC6\u94A5"
+                      class: "px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors shadow-sm ml-2",
+                      children: "\u4E00\u952E\u9009\u4E2D\u6240\u6709\u5F02\u5E38\u7684 key"
                     }
                   )
                 ] })
               ] }),
+              /* @__PURE__ */ jsxDEV("div", { id: "selection-stats", class: "mt-2 mb-2 text-sm text-slate-600" }),
               /* @__PURE__ */ jsxDEV("div", { class: "max-h-96 overflow-y-auto border rounded-lg", children: /* @__PURE__ */ jsxDEV("table", { id: "keys-table", class: "w-full text-left", children: [
                 /* @__PURE__ */ jsxDEV("thead", { class: "bg-slate-50", children: /* @__PURE__ */ jsxDEV("tr", { class: "border-b border-slate-200", children: [
                   /* @__PURE__ */ jsxDEV("th", { class: "p-3 w-6", children: /* @__PURE__ */ jsxDEV("input", { type: "checkbox", id: "select-all-keys", class: "rounded border-slate-300" }) }),
@@ -2282,6 +2283,7 @@ var Render = ({ isAuthenticated, showWarning }) => {
 										const nextPageBtn = document.getElementById('next-page-btn');
 										const pageInfoSpan = document.getElementById('page-info');
 										const selectInvalidKeysBtn = document.getElementById('select-invalid-keys-btn');
+										const selectionStatsDiv = document.getElementById('selection-stats');
 
 										const navKeysList = document.getElementById('nav-keys-list');
 										const navAddKeys = document.getElementById('nav-add-keys');
@@ -2343,6 +2345,7 @@ var Render = ({ isAuthenticated, showWarning }) => {
 												      const row = document.createElement('tr');
 												      row.className = 'hover:bg-slate-50 transition-colors';
 												      row.dataset.key = key.api_key;
+												      row.dataset.status = key.status;
 												      row.innerHTML = \`
 												        <td class="p-3 w-6"><input type="checkbox" class="key-checkbox rounded border-slate-300" data-key="\${key.api_key}" /></td>
 												        <td class="p-3 font-mono text-sm text-slate-700">\${key.api_key}</td>
@@ -2364,11 +2367,36 @@ var Render = ({ isAuthenticated, showWarning }) => {
 										const updateDeleteButtonVisibility = () => {
 												const selectedKeys = document.querySelectorAll('.key-checkbox:checked');
 												deleteSelectedBtn.classList.toggle('hidden', selectedKeys.length === 0);
+												updateSelectionStats();
+										};
+
+										const updateSelectionStats = () => {
+											const selectedCheckboxes = document.querySelectorAll('.key-checkbox:checked');
+											if (selectedCheckboxes.length === 0) {
+												selectionStatsDiv.textContent = '';
+												return;
+											}
+
+											let normalCount = 0;
+											let abnormalCount = 0;
+
+											selectedCheckboxes.forEach(checkbox => {
+												const row = checkbox.closest('tr');
+												const status = row.dataset.status;
+												if (status === 'normal') {
+													normalCount++;
+												} else if (status === 'abnormal') {
+													abnormalCount++;
+												}
+											});
+											
+											selectionStatsDiv.textContent = \`\u5DF2\u9009\u4E2D \${selectedCheckboxes.length} \u4E2A key\uFF0C\u5176\u4E2D \${normalCount} \u4E2A key \u72B6\u6001\u6B63\u5E38\uFF0C\${abnormalCount} \u4E2A key \u72B6\u6001\u5F02\u5E38\u3002\`;
 										};
 
 										keysTableBody.addEventListener('change', (e) => {
 												if (e.target.classList.contains('key-checkbox')) {
 												  updateDeleteButtonVisibility();
+												  updateSelectionStats();
 												}
 										});
 
@@ -2378,6 +2406,7 @@ var Render = ({ isAuthenticated, showWarning }) => {
 												  checkbox.checked = selectAllCheckbox.checked;
 												});
 												updateDeleteButtonVisibility();
+												updateSelectionStats();
 										});
 
 										deleteSelectedBtn.addEventListener('click', async () => {
@@ -2444,17 +2473,15 @@ var Render = ({ isAuthenticated, showWarning }) => {
 										});
 
 										selectInvalidKeysBtn.addEventListener('click', () => {
-											const rows = keysTableBody.querySelectorAll('tr');
+											const rows = keysTableBody.querySelectorAll('tr[data-status="abnormal"]');
 											rows.forEach(row => {
-												const statusCell = row.querySelector('.status-cell');
-												if (statusCell && statusCell.textContent === '\u65E0\u6548') {
-													const checkbox = row.querySelector('.key-checkbox');
-													if (checkbox) {
-														checkbox.checked = true;
-													}
+												const checkbox = row.querySelector('.key-checkbox');
+												if (checkbox) {
+													checkbox.checked = true;
 												}
 											});
 											updateDeleteButtonVisibility();
+											updateSelectionStats();
 										});
 
 										addKeysForm.addEventListener('submit', async (e) => {
@@ -2595,7 +2622,7 @@ var LoadBalancer = class extends DurableObject {
       const apiKey = row[0];
       const failedCount = row[1];
       try {
-        const response = await fetch(`${BASE_URL}/${API_VERSION}/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch(`${BASE_URL}/${API_VERSION}/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -2635,7 +2662,7 @@ var LoadBalancer = class extends DurableObject {
     for (const row of Array.from(normalKeys)) {
       const apiKey = row[0];
       try {
-        const response = await fetch(`${BASE_URL}/${API_VERSION}/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch(`${BASE_URL}/${API_VERSION}/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -3443,7 +3470,7 @@ var LoadBalancer = class extends DurableObject {
       const checkResults = await Promise.all(
         keys.map(async (key) => {
           try {
-            const response = await fetch(`${BASE_URL}/${API_VERSION}/models/gemini-2.5-flash:generateContent?key=${key}`, {
+            const response = await fetch(`${BASE_URL}/${API_VERSION}/models/gemini-2.5-flash-lite:generateContent?key=${key}`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json"
