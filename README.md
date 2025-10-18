@@ -1,12 +1,8 @@
 # Gemini API 负载均衡器 (gemini-balance-do)
 
-> 参考项目：https://github.com/tech-shrimp/gemini-balance-lite ，基于爬爬虾的项目改造了一下，更适合在 cloudflare worker 中使用，即使是广东用户也不担心，哪怕你请求的 worker 节点在香港，最后请求也会路由到美国再向 Gemini 发起请求！
+> 这是一个部署在 Cloudflare Workers 上的 Gemini API 负载均衡器和代理服务，使用了 Durable Objects 来存储和管理 API 密钥，无论你连接的 worker 节点在属于哪个地区，最后都会转发到美国以后再向 Gemini 发起请求，不用再担心地区不支持的问题！
 
-这是一个部署在 Cloudflare Workers 上的 Gemini API 负载均衡器和代理服务，使用了 Durable Objects 来存储和管理 API 密钥。
-
-Youtube: https://youtu.be/_5a6HfL2wn4
-
-> 假如视频对你有帮助，别忘了帮我点个赞，有什么问题也可以在评论区讨论😂
+使用教程: https://youtu.be/_5a6HfL2wn4
 
 它旨在解决以下问题：
 *   将多个 Gemini API 密钥聚合到一个端点中。
@@ -17,6 +13,7 @@ Youtube: https://youtu.be/_5a6HfL2wn4
 
 *   **Gemini API 代理**: 作为 Google Gemini API 的稳定代理。
 *   **负载均衡**: 在配置的多个 API 密钥之间随机分配请求。
+*   **本地 key 透传**：如果不想使用多 key 负载均衡，可以开启本地 key 透传，此时本项目仅作为一个 Gemini API 中转
 *   **OpenAI API 格式兼容**: 支持 `/v1/chat/completions`, `/v1/embeddings` 和 `/v1/models` 等常用 OpenAI 端点。
 *   **流式响应**: 完全支持 Gemini API 的流式响应。
 *   **API 密钥管理**:
@@ -75,7 +72,20 @@ Youtube: https://youtu.be/_5a6HfL2wn4
 *   **一键检查**： 点击“一键检查”按钮，可以检查 API key 可用性。
 *   **批量删除**： 选中无效的 API key，可以一键删除所有无效的 API key。
 
-**管理面板访问密钥为 `7b18e536c27ab304266db3220b8e000db8fbbe35d6e1fde729a1a1d47303858d`，用于访问管理面板和管理 API 时的身份验证，强烈建议你在Cloudflare Worker环境变量中修改 `HOME_ACCESS_KEY` 的值，修改完成后重新部署即可。**
+## 配置
+
+`FORWARD_CLIENT_KEY_ENABLED` : 默认为 false，设置为 true 时，会透传客户端的 key，此时仅作为 Gemini API 代理，没有多 key 负载均衡功能。
+
+`AUTH_KEY` ： 默认为：`ajielu`，本项目API请求密钥，如果 `FORWARD_CLIENT_KEY_ENABLED` 为 true，那么本项目仅作为一个 Gemini API 代理，无需认证
+
+**注意**：当启用 `FORWARD_CLIENT_KEY_ENABLED` 时，客户端的 API key 可以通过以下方式传递：
+- 查询参数：`?key=your_api_key`
+- Header：`x-goog-api-key: your_api_key`
+- Authorization Header：`Authorization: Bearer your_api_key`
+
+`HOME_ACCESS_KEY`：网页管理面板密码，默认为 `7b18e536c27ab304266db3220b8e000db8fbbe35d6e1fde729a1a1d47303858d`
+
+**强烈建议你在Cloudflare Worker环境变量中修改 `HOME_ACCESS_KEY` 和 `AUTH_KEY` 的值，修改完成后重新部署即可。**
 
 ## 💻 API 用法
 
@@ -83,10 +93,7 @@ Youtube: https://youtu.be/_5a6HfL2wn4
 
 BaseURL: <你的worker地址>
 
-API 密钥: `<你的AUTH_KEY>`
-
-**默认 API 密钥为 `ajielu`，强烈建议你在Cloudflare Worker环境变量中修改 `AUTH_KEY` 的值，并重新部署 Worker。**
-
+API 密钥: `<你的AUTH_KEY>`，如果设置了 `FORWARD_CLIENT_KEY_ENABLED` 为 true，那么这里需要填你自己的 key 就行
 
 ### 管理 API
 
@@ -98,3 +105,15 @@ API 密钥: `<你的AUTH_KEY>`
 *   `DELETE /api/keys`: 批量删除 API 密钥。请求体为 `{"keys": ["key1", "key2"]}`。
 
 普通 Gemini/OpenAI API 调用只需使用 `AUTH_KEY`，无需管理权限认证
+
+## 支持
+
+如果你觉得这个项目对你有点用，就赶紧给我点点关注、点点赞，算我求你了！你要是不点，下次我还求🙏你！
+
+Youtube 账号：[阿杰鲁](https://www.youtube.com/@zaunist)
+
+## 感谢
+
+- [gemini-balance-lite](https://github.com/tech-shrimp/gemini-balance-lite)
+
+- [cloudflare](https://www.cloudflare.com/)

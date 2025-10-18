@@ -12,6 +12,9 @@ importers:
         specifier: ^4.8.12
         version: 4.8.12
     devDependencies:
+      '@types/node':
+        specifier: ^24.3.1
+        version: 24.8.1
       esbuild:
         specifier: ^0.25.9
         version: 0.25.9
@@ -511,6 +514,9 @@ packages:
   '@speed-highlight/core@1.2.7':
     resolution: {integrity: sha512-0dxmVj4gxg3Jg879kvFS/msl4s9F3T9UXC1InxgOf7t5NvcPD97u/WTA5vL/IxWHMn7qSxBozqrnnE2wvl1m8g==}
 
+  '@types/node@24.8.1':
+    resolution: {integrity: sha512-alv65KGRadQVfVcG69MuB4IzdYVpRwMG/mq8KWOaoOdyY617P5ivaDiMCGOFDWD2sAn5Q0mR3mRtUOgm99hL9Q==}
+
   acorn-walk@8.3.2:
     resolution: {integrity: sha512-cjkyv4OtNCIeqhHrfS81QWXoCBPExR/J62oyEqepVw8WaQeSqpW2uhuLPh1m9eWhDuOo/jUXVTlifvesOWp/4A==}
     engines: {node: '>=0.4.0'}
@@ -636,6 +642,9 @@ packages:
 
   ufo@1.6.1:
     resolution: {integrity: sha512-9a4/uxlTWJ4+a5i0ooc1rU7C7YOw3wT+UGqdeNNHWnOF9qcMBgLRS+4IYUqbczewFx4mLEig6gawh7X6mFlEkA==}
+
+  undici-types@7.14.0:
+    resolution: {integrity: sha512-QQiYxHuyZ9gQUIrmPo3IA+hUl4KYk8uSA7cHrcKd/l3p1OTpZcM0Tbp9x7FAtXdAYhlasd60ncPpgu6ihG6TOA==}
 
   undici@7.13.0:
     resolution: {integrity: sha512-l+zSMssRqrzDcb3fjMkjjLGmuiiK2pMIcV++mJaAc9vhjSGpvM7h43QgP+OAMb1GImHmbPyG2tBXeuyG5iY4gA==}
@@ -969,6 +978,10 @@ snapshots:
 
   '@speed-highlight/core@1.2.7': {}
 
+  '@types/node@24.8.1':
+    dependencies:
+      undici-types: 7.14.0
+
   acorn-walk@8.3.2: {}
 
   acorn@8.14.0: {}
@@ -1139,6 +1152,8 @@ snapshots:
   typescript@5.9.2: {}
 
   ufo@1.6.1: {}
+
+  undici-types@7.14.0: {}
 
   undici@7.13.0: {}
 

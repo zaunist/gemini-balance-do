@@ -3,7 +3,7 @@
 	"name": "gemini-balance-do",
 	"pages_build_output_dir": "public",
 	"compatibility_date": "2025-08-05",
-	"keep_vars": true,
+	"keep_vars": true,//部署时保留 Cloudflare 控制台中设置的变量值，不被 vars 字段覆盖
 	"migrations": [
 		{
 			"new_sqlite_classes": ["LoadBalancer"],
@@ -27,4 +27,34 @@
 		"HOME_ACCESS_KEY": "7b18e536c27ab304266db3220b8e000db8fbbe35d6e1fde729a1a1d47303858d",
 		"FORWARD_CLIENT_KEY_ENABLED": false
 	}
+	/**
+	 * Smart Placement
+	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
+	 */
+	// "placement": { "mode": "smart" }
+	/**
+	 * Bindings
+	 * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
+	 * databases, object storage, AI inference, real-time communication and more.
+	 * https://developers.cloudflare.com/workers/runtime-apis/bindings/
+	 */
+	/**
+	 * Environment Variables
+	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
+	 */
+
+	/**
+	 * Note: Use secrets to store sensitive data.
+	 * https://developers.cloudflare.com/workers/configuration/secrets/
+	 */
+	/**
+	 * Static Assets
+	 * https://developers.cloudflare.com/workers/static-assets/binding/
+	 */
+	// "assets": { "directory": "./public/", "binding": "ASSETS" }
+	/**
+	 * Service Bindings (communicate between multiple Workers)
+	 * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
+	 */
+	// "services": [{ "binding": "MY_SERVICE", "service": "my-service" }]
 }
