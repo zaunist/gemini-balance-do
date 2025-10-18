@@ -56,6 +56,7 @@
     # Linux/macOS/WSL:
     CLOUDFLARE_API_TOKEN=YOUR_API_TOKEN pnpm run pages:deploy
     ```
+    注：YOUR_API_TOKEN的获取方式，进入https://dash.cloudflare.com/profile/api-tokens ，点击**创建令牌**,选择**编辑 Cloudflare Workers**行的**使用模板**，一步步创建。
 
 ## 未来合并上游更新指南
 
