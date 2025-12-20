@@ -2,8 +2,6 @@
 
 > 这是一个部署在 Cloudflare Workers 上的 Gemini API 负载均衡器和代理服务，使用了 Durable Objects 来存储和管理 API 密钥，无论你连接的 worker 节点在属于哪个地区，最后都会转发到美国以后再向 Gemini 发起请求，不用再担心地区不支持的问题！
 
-使用教程: https://youtu.be/_5a6HfL2wn4
-
 它旨在解决以下问题：
 *   将多个 Gemini API 密钥聚合到一个端点中。
 *   通过随机轮询密钥池来实现请求的负载均衡。
@@ -106,11 +104,6 @@ API 密钥: `<你的AUTH_KEY>`，如果设置了 `FORWARD_CLIENT_KEY_ENABLED` �
 
 普通 Gemini/OpenAI API 调用只需使用 `AUTH_KEY`，无需管理权限认证
 
-## 支持
-
-如果你觉得这个项目对你有点用，就赶紧给我点点关注、点点赞，算我求你了！你要是不点，下次我还求🙏你！
-
-Youtube 账号：[阿杰鲁](https://www.youtube.com/@zaunist)
 
 ## 感谢
 
